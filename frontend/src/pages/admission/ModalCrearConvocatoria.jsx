@@ -100,7 +100,7 @@ export default function ModalCrearConvocatoria({ open, onClose, onSuccess }) {
                     <Grid container spacing={2} sx={{ mb: 3 }}>
                         <Grid item xs={12} sm={8}>
                             <TextField
-                                label="Nombre de la Convocatoria *"
+                                label="Nombre de la Convocatoria"
                                 name="nombre"
                                 value={form.nombre}
                                 onChange={handleChange}
@@ -113,7 +113,7 @@ export default function ModalCrearConvocatoria({ open, onClose, onSuccess }) {
 
                         <Grid item xs={12} sm={4}>
                             <TextField
-                                label="Código Único *"
+                                label="Código Único"
                                 name="codigo"
                                 value={form.codigo}
                                 onChange={handleChange}
@@ -123,11 +123,13 @@ export default function ModalCrearConvocatoria({ open, onClose, onSuccess }) {
                                 placeholder="Ej. ADM-2026-2"
                             />
                         </Grid>
+                    </Grid>
 
+                    <Grid container spacing={2} sx={{ mb: 3 }}>
                         <Grid item xs={12} sm={6}>
                             <TextField
                                 type="date"
-                                label="Fecha Inicio Inscripciones *"
+                                label="Inicio de Inscripciones"
                                 name="fecha_inicio_inscripcion"
                                 value={form.fecha_inicio_inscripcion}
                                 onChange={handleChange}
@@ -141,7 +143,7 @@ export default function ModalCrearConvocatoria({ open, onClose, onSuccess }) {
                         <Grid item xs={12} sm={6}>
                             <TextField
                                 type="date"
-                                label="Fecha Fin Inscripciones *"
+                                label="Fin de las Inscripciones"
                                 name="fecha_fin_inscripcion"
                                 value={form.fecha_fin_inscripcion}
                                 onChange={handleChange}
@@ -155,11 +157,13 @@ export default function ModalCrearConvocatoria({ open, onClose, onSuccess }) {
                             }}
                             />
                         </Grid>
+                    </Grid>
 
+                    <Grid container spacing={2} sx={{ mb: 3 }}>
                         <Grid item xs={12} sm={4}>
                             <TextField
                             type="date"
-                            label="Fecha de Evaluación *"
+                            label="Día de la Evaluación"
                             name="fecha_evaluacion"
                             value={form.fecha_evaluacion}
                             onChange={handleChange}
@@ -177,7 +181,7 @@ export default function ModalCrearConvocatoria({ open, onClose, onSuccess }) {
                         <Grid item xs={12} sm={4}>
                             <TextField
                                 type="date"
-                                label="Publicación Resultados *"
+                                label="Publicación de Resultados"
                                 name="fecha_publicacion_resultados"
                                 value={form.fecha_publicacion_resultados}
                                 onChange={handleChange}
@@ -231,7 +235,7 @@ export default function ModalCrearConvocatoria({ open, onClose, onSuccess }) {
                                     </Typography>
                                     <TextField
                                         type="number"
-                                        label="Vacantes a Ofertars *"
+                                        label="Vacantes Ofertadas"
                                         name="vacantes_inicial"
                                         value={form.vacantes_inicial}
                                         onChange={handleChange}
@@ -260,7 +264,7 @@ export default function ModalCrearConvocatoria({ open, onClose, onSuccess }) {
                                     </Typography>
                                     <TextField
                                         type="number"
-                                        label="Vacantes a Ofertar *"
+                                        label="Vacantes Ofertadas"
                                         name="vacantes_fisica"
                                         value={form.vacantes_fisica}
                                         onChange={handleChange}
