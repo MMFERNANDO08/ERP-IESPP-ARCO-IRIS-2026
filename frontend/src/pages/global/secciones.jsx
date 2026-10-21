@@ -572,7 +572,7 @@ export default function SeccionesPorEspecialidad() {
 
                             {/* Campos del Formulario */}
                             <Grid container spacing={3}>
-                                <Grid item xs={12} sm={6}>
+                                <Grid item xs={12} sm={12}>
                                     <Typography variant="body2" sx={{ fontWeight: 700, mb: 1, color: '#475569' }}>
                                         Código de Sección <span style={{color: '#ef4444'}}>*</span>
                                     </Typography>
@@ -594,7 +594,7 @@ export default function SeccionesPorEspecialidad() {
                                     />
                                 </Grid>
 
-                                <Grid item xs={12} sm={6}>
+                                <Grid item xs={12} sm={12}>
                                     <Typography variant="body2" sx={{ fontWeight: 700, mb: 1, color: '#475569' }}>
                                         Estado Operativo <span style={{color: '#ef4444'}}>*</span>
                                     </Typography>

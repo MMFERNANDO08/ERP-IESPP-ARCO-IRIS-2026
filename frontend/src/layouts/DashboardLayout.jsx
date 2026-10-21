@@ -40,7 +40,9 @@ import {
     FileSpreadsheet,
     Briefcase, 
     ArrowRightLeft, 
-    Tag, 
+    Tag,
+    Building2,
+    School,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { THEME_COLORS } from '../theme/colors';
@@ -131,9 +133,11 @@ export default function DashboardLayout() {
             icon: <Briefcase size={18} />,
             show: hasRole('superadmin') || hasRole('admin'),
             children: [
-                { text: 'Equivalencias', icon: <ArrowRightLeft size={16} />, path: '/gestion-global/equivalencias' },
+                { text: 'Modalidad', icon: <ArrowRightLeft size={16} />, path: '/gestion-global/modalidad' },
+                { text: 'Facultades', icon: <Building2 size={16} />, path: '/gestion-global/facultades' },
+                { text: 'Niveles Educativos', icon: <School size={16} />, path: '/gestion-global/niveles-educativos' },
                 { text: 'Especialidades', icon: <Briefcase size={16} />, path: '/gestion-global/especialidad' },
-                { text: 'Planes de estudio', icon: <Users size={16} />, path: '/gestion-global/planes-de-estudio' },
+                { text: 'Planes de estudio', icon: <BookOpen size={16} />, path: '/gestion-global/planes-estudio' },
                 { text: 'Secciones', icon: <Tag size={16} />, path: '/gestion-global/secciones' },
             ],
         },
@@ -274,10 +278,12 @@ export default function DashboardLayout() {
         if (path.startsWith('/alumnos')) return 'Gestión de Alumnos';
         
         // Títulos Dinámicos para Gestión Global
+        if (path.startsWith('/gestion-global/modalidad')) return 'Gestión Global — Modalidades';
+        if (path.startsWith('/gestion-global/facultades')) return 'Gestión Global — Facultades';
+        if (path.startsWith('/gestion-global/niveles-educativos')) return 'Gestión Global — Niveles Educativos';
         if (path.startsWith('/gestion-global/especialidad')) return 'Gestión Global — Especialidades Académicas';
+        if (path.startsWith('/gestion-global/planes-estudio')) return 'Gestión Global — Planes de Estudio';
         if (path.startsWith('/gestion-global/secciones')) return 'Gestión Global — Secciones y Periodos';
-        if (path.startsWith('/gestion-global/planes')) return 'Gestión Global — Planes de Estudio';
-        if (path.startsWith('/gestion-global/equivalencias')) return 'Gestión Global — Equivalencias de Cursos';
         if (path.startsWith('/gestion-global')) return 'Gestión Global Académica';
 
         return 'ERP IESPP Arco Iris — Panel General';

@@ -35,6 +35,10 @@ import CuadroMeritoPage from './pages/admission/CuadroMeritoPage';
 
 // Páginas de Gestión Global
 import GestionCarrera from './pages/global/especialidad';
+import GestionPlanesEstudio from './pages/global/planesEstudio';
+import GestionModalidades from './pages/global/modalidad';
+import GestionNivelesEducativos from './pages/global/nivelesEducativos';
+import GestionFacultades from './pages/global/facultades';
 
 // Página de tesorería
 import TreasuryDashboard from './pages/treasury/TreasuryDashboard';
@@ -119,8 +123,28 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 
                                 {/* Gestión Global */}
                                 <Route
+                                    path="/gestion-global/modalidad"
+                                    element={<GestionModalidades />}
+                                />
+
+                                <Route
+                                    path="/gestion-global/facultades"
+                                    element={<GestionFacultades />}
+                                />
+
+                                <Route
+                                    path="/gestion-global/niveles-educativos"
+                                    element={<GestionNivelesEducativos />}
+                                />
+
+                                <Route
                                     path="/gestion-global/especialidad"
                                     element={<GestionCarrera />}
+                                />
+
+                                <Route
+                                    path="/gestion-global/planes-estudio"
+                                    element={<GestionPlanesEstudio />}
                                 />
 
                                 {/* Tesorería */}

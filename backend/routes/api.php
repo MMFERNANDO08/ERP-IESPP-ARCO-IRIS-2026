@@ -7,8 +7,12 @@ use App\Http\Controllers\Api\AdmisionProcesoController;
 use App\Http\Controllers\Api\AdmisionResultadoController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\EspecialidadController;
+use App\Http\Controllers\Api\FacultadController;
+use App\Http\Controllers\Api\ModalidadController;
+use App\Http\Controllers\Api\NivelEducativoController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\SeccionController;
+use App\Http\Controllers\Api\PlanEstudioController;
 use App\Http\Controllers\Api\TesoreriaPagoController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
@@ -32,6 +36,39 @@ Route::middleware('auth:sanctum')
         Route::get('/{codigo}', [EspecialidadController::class, 'show']);
         Route::put('/{codigo}', [EspecialidadController::class, 'update']);
         Route::delete('/{codigo}', [EspecialidadController::class, 'destroy']);
+    });
+
+// Facultades Management (Gestión de Facultades)
+Route::middleware('auth:sanctum')
+    ->prefix('facultades')
+    ->group(function () {
+        Route::get('/', [FacultadController::class, 'index']);
+        Route::post('/', [FacultadController::class, 'store']);
+        Route::get('/{idOrCodigo}', [FacultadController::class, 'show']);
+        Route::put('/{idOrCodigo}', [FacultadController::class, 'update']);
+        Route::delete('/{idOrCodigo}', [FacultadController::class, 'destroy']);
+    });
+
+// Modalidades Management (Gestión de Modalidades de Estudio)
+Route::middleware('auth:sanctum')
+    ->prefix('modalidades')
+    ->group(function () {
+        Route::get('/', [ModalidadController::class, 'index']);
+        Route::post('/', [ModalidadController::class, 'store']);
+        Route::get('/{idOrCodigo}', [ModalidadController::class, 'show']);
+        Route::put('/{idOrCodigo}', [ModalidadController::class, 'update']);
+        Route::delete('/{idOrCodigo}', [ModalidadController::class, 'destroy']);
+    });
+
+// Niveles Educativos Management (Gestión de Niveles Educativos)
+Route::middleware('auth:sanctum')
+    ->prefix('niveles-educativos')
+    ->group(function () {
+        Route::get('/', [NivelEducativoController::class, 'index']);
+        Route::post('/', [NivelEducativoController::class, 'store']);
+        Route::get('/{idOrCodigo}', [NivelEducativoController::class, 'show']);
+        Route::put('/{idOrCodigo}', [NivelEducativoController::class, 'update']);
+        Route::delete('/{idOrCodigo}', [NivelEducativoController::class, 'destroy']);
     });
 
 // Secciones Management (Gestión de Secciones y por Carrera)
@@ -133,3 +170,12 @@ if (app()->environment('testing', 'local')) {
         return response()->json(['message' => 'Rol concedido']);
     });
 }
+
+Route::prefix('planes-estudio')->group(function () {
+    Route::get('/', [PlanEstudioController::class, 'index']);
+    Route::post('/', [PlanEstudioController::class, 'store']);
+    Route::get('/{id}', [PlanEstudioController::class, 'show']);
+    Route::put('/{id}', [PlanEstudioController::class, 'update']);
+    Route::patch('/{id}/estado', [PlanEstudioController::class, 'cambiarEstado']);
+    Route::delete('/{id}', [PlanEstudioController::class, 'destroy']);
+});
