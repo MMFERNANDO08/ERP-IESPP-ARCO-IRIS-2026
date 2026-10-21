@@ -179,3 +179,11 @@ Route::prefix('planes-estudio')->group(function () {
     Route::patch('/{id}/estado', [PlanEstudioController::class, 'cambiarEstado']);
     Route::delete('/{id}', [PlanEstudioController::class, 'destroy']);
 });
+
+Route::prefix('plan-estudios')->group(function () {  
+    // Nuevas rutas para el CRUD de modalidades
+    Route::get('/modalidades-crud', [PlanEstudioController::class, 'indexModalidades']);
+    Route::post('/modalidades-crud', [PlanEstudioController::class, 'storeModalidad']);
+    Route::put('/modalidades-crud/{id}', [PlanEstudioController::class, 'updateModalidad']);
+    Route::delete('/modalidades-crud/{id}', [PlanEstudioController::class, 'destroyModalidad']);
+});
