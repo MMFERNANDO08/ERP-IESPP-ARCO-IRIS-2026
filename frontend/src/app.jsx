@@ -40,6 +40,10 @@ import GestionModalidades from './pages/global/modalidad';
 import GestionNivelesEducativos from './pages/global/nivelesEducativos';
 import GestionFacultades from './pages/global/facultades';
 
+// -------------
+import CostosMatricula from './pages/matricula/CostosMatricula';
+// ------------------
+
 // Página de tesorería
 import TreasuryDashboard from './pages/treasury/TreasuryDashboard';
 
@@ -62,6 +66,11 @@ ReactDOM.createRoot(document.getElementById('root')).render(
                             <Route
                                 path="/"
                                 element={<DashboardHome />}
+                            />
+
+                            <Route 
+                                path="matricula/costos" 
+                                element={<CostosMatricula />} 
                             />
 
                             {/* Módulos para administradores */}

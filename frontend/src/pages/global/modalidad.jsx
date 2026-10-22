@@ -344,7 +344,7 @@ export default function Modalidades() {
                                     >
                                         <MenuItem value="PRESENCIAL">PRESENCIAL</MenuItem>
                                         <MenuItem value="SEMIPRESENCIAL">SEMIPRESENCIAL</MenuItem>
-                                        <MenuItem value="VIRTUAL">VIRTUAL</MenuItem>
+                                        <MenuItem value="VIRTUAL">A DISTANCIA</MenuItem>
                                     </TextField>
                                 </Grid>
                             </Grid>

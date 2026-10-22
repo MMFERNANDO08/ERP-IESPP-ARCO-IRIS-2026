@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\PlanEstudioController;
 use App\Http\Controllers\Api\TesoreriaPagoController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\MatriculaController;
 
 // Alumnos Management
 Route::middleware('auth:sanctum')
@@ -186,4 +187,11 @@ Route::prefix('plan-estudios')->group(function () {
     Route::post('/modalidades-crud', [PlanEstudioController::class, 'storeModalidad']);
     Route::put('/modalidades-crud/{id}', [PlanEstudioController::class, 'updateModalidad']);
     Route::delete('/modalidades-crud/{id}', [PlanEstudioController::class, 'destroyModalidad']);
+});
+
+// Rutas para el Módulo de Gestión de Matrícula
+Route::prefix('matricula')->group(function () {
+    Route::get('/modalidades', [MatriculaController::class, 'getModalidades']);
+    Route::get('/programas', [MatriculaController::class, 'getProgramas']);
+    Route::get('/periodos', [MatriculaController::class, 'getPeriodos']);
 });
