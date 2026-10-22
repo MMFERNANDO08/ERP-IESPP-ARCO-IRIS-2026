@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Search, RefreshCcw, Filter, DownloadCloud, Users, Hash, Mail, Phone, Pencil, UserCircle, BookOpen, CalendarClock } from 'lucide-react';
+import { Search, RefreshCcw, Filter, DownloadCloud, Users, Mail, Phone, Pencil, UserCircle, BookOpen, CalendarClock, Building2 } from 'lucide-react';
 import { alumnoService } from '../../services/alumnoService';
 import { modalidadService } from '../../services/modalidadService';
 import { especialidadService } from '../../services/especialidadService';
+import { facultadService } from '../../services/facultadService';
 
 const FORMULARIO_VACIO = {
     tipo_documento: 'DNI',
@@ -17,7 +18,8 @@ const FORMULARIO_VACIO = {
     correo_institucional: '',
     correo_personal: '',
     modalidad: '', 
-    especialidad: '', // Se actualizará dinámicamente
+    facultad_id: '',
+    especialidad: '', 
     periodo_ingreso: '2026-II',
 };
 
@@ -164,15 +166,17 @@ const premiumStyles = `
 export default function GestionAlumnos() {
     const [alumnos, setAlumnos] = useState([]);
     const [listaModalidades, setListaModalidades] = useState([]);
+    const [listaFacultades, setListaFacultades] = useState([]);
     const [listaEspecialidades, setListaEspecialidades] = useState([]);
     const [busquedaRealizada, setBusquedaRealizada] = useState(false);
     const [cargando, setCargando] = useState(false);
     const [guardando, setGuardando] = useState(false);
 
-    // Filtros
+    // Filtros de búsqueda principal
     const [codigoBusqueda, setCodigoBusqueda] = useState('');
     const [filtroModalidad, setFiltroModalidad] = useState('');
     const [filtroPeriodo, setFiltroPeriodo] = useState('');
+    const [filtroFacultad, setFiltroFacultad] = useState('');
     const [filtroEspecialidad, setFiltroEspecialidad] = useState('');
 
     const [modalAbierto, setModalAbierto] = useState(false);
@@ -183,11 +187,13 @@ export default function GestionAlumnos() {
     useEffect(() => {
         const cargarDatosBase = async () => {
             try {
-                const [modResp, espResp] = await Promise.all([
+                const [modResp, facResp, espResp] = await Promise.all([
                     modalidadService.listar({ solo_activos: 1 }),
+                    facultadService.listar({ solo_activos: 1 }),
                     especialidadService.listar({ solo_activos: 1 })
                 ]);
                 setListaModalidades(extraerArreglo(modResp));
+                setListaFacultades(extraerArreglo(facResp));
                 setListaEspecialidades(extraerArreglo(espResp));
             } catch (error) {
                 console.error("Error al cargar datos base:", error);
@@ -210,6 +216,7 @@ export default function GestionAlumnos() {
                 buscar: codigoBusqueda.trim(),
                 modalidad: filtroModalidad,
                 periodo: filtroPeriodo,
+                facultad_id: filtroFacultad,
                 especialidad: filtroEspecialidad
             });
             setAlumnos(extraerArreglo(resp));
@@ -219,7 +226,7 @@ export default function GestionAlumnos() {
         } finally {
             setCargando(false);
         }
-    }, [codigoBusqueda, filtroModalidad, filtroPeriodo, filtroEspecialidad]);
+    }, [codigoBusqueda, filtroModalidad, filtroPeriodo, filtroFacultad, filtroEspecialidad]);
 
     const mostrarFeedback = (tipo, mensaje) => {
         setFeedback({ tipo, mensaje });
@@ -233,6 +240,7 @@ export default function GestionAlumnos() {
                 ...FORMULARIO_VACIO,
                 ...alumno,
                 fecha_nacimiento: alumno.fecha_nacimiento ? String(alumno.fecha_nacimiento).slice(0, 10) : '',
+                facultad_id: alumno.facultad_id || alumno.especialidad?.facultad_id || '',
             });
         } else {
             setAlumnoSeleccionado(null);
@@ -245,6 +253,7 @@ export default function GestionAlumnos() {
         setCodigoBusqueda('');
         setFiltroModalidad('');
         setFiltroPeriodo('');
+        setFiltroFacultad('');
         setFiltroEspecialidad('');
         setAlumnos([]);
         setBusquedaRealizada(false);
@@ -252,7 +261,14 @@ export default function GestionAlumnos() {
 
     const actualizarCampo = (e) => {
         const { name, value } = e.target;
-        setFormulario(prev => ({ ...prev, [name]: value }));
+        setFormulario(prev => {
+            const nuevo = { ...prev, [name]: value };
+            // Si cambia la facultad en el formulario, opcionalmente puedes limpiar la especialidad si no pertenece
+            if (name === 'facultad_id') {
+                nuevo.especialidad = '';
+            }
+            return nuevo;
+        });
     };
 
     const guardarAlumno = async (e) => {
@@ -274,6 +290,16 @@ export default function GestionAlumnos() {
             setGuardando(false);
         }
     };
+
+    // Especialidades filtradas en el formulario según la facultad seleccionada
+    const especialidadesFormulario = formulario.facultad_id 
+        ? listaEspecialidades.filter(esp => String(esp.facultad_id) === String(formulario.facultad_id))
+        : listaEspecialidades;
+
+    // Especialidades filtradas en el panel de búsqueda según el filtro de facultad seleccionado
+    const especialidadesFiltroTabla = filtroFacultad
+        ? listaEspecialidades.filter(esp => String(esp.facultad_id) === String(filtroFacultad))
+        : listaEspecialidades;
 
     return (
         <div className="container-fluid px-4 py-5" style={{ maxWidth: '1400px' }}>
@@ -321,12 +347,25 @@ export default function GestionAlumnos() {
 
                         <div className="col-12 col-xl-8">
                             <div className="row g-3">
-                                <div className="col-md-4">
+                                <div className="col-md-3">
+                                    <div className="premium-input-group">
+                                        <label className="filter-label"><Building2 size={14}/> Facultad</label>
+                                        <select className="form-select" value={filtroFacultad} onChange={(e) => { setFiltroFacultad(e.target.value); setFiltroEspecialidad(''); }}>
+                                            <option value="">Todas</option>
+                                            {listaFacultades.map(fac => (
+                                                <option key={fac.id} value={fac.id}>
+                                                    {fac.nombre}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="col-md-3">
                                     <div className="premium-input-group">
                                         <label className="filter-label">Especialidad</label>
                                         <select className="form-select" value={filtroEspecialidad} onChange={(e) => setFiltroEspecialidad(e.target.value)}>
                                             <option value="">Todas</option>
-                                            {listaEspecialidades.map(esp => (
+                                            {especialidadesFiltroTabla.map(esp => (
                                                 <option key={esp.codigo} value={esp.codigo}>
                                                     {esp.nombre}
                                                 </option>
@@ -334,7 +373,7 @@ export default function GestionAlumnos() {
                                         </select>
                                     </div>
                                 </div>
-                                <div className="col-md-4">
+                                <div className="col-md-3">
                                     <div className="premium-input-group">
                                         <label className="filter-label">Modalidad</label>
                                         <select className="form-select" value={filtroModalidad} onChange={(e) => setFiltroModalidad(e.target.value)}>
@@ -347,7 +386,7 @@ export default function GestionAlumnos() {
                                         </select>
                                     </div>
                                 </div>
-                                <div className="col-md-4">
+                                <div className="col-md-3">
                                     <div className="premium-input-group">
                                         <label className="filter-label"><CalendarClock size={14}/> Periodo</label>
                                         <select className="form-select" value={filtroPeriodo} onChange={(e) => setFiltroPeriodo(e.target.value)}>
@@ -406,58 +445,66 @@ export default function GestionAlumnos() {
                             <thead>
                                 <tr>
                                     <th className="ps-4">Identidad del Estudiante</th>
-                                    <th>Especialidad</th>
+                                    <th>Facultad y Especialidad</th>
                                     <th>Periodo / Mod.</th>
                                     <th>Información de Contacto</th>
                                     <th className="text-end pe-4">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {alumnos.map((alumno) => (
-                                    <tr key={alumno.id}>
-                                        <td className="ps-4">
-                                            <div className="d-flex align-items-center gap-3">
-                                                <div className="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white shadow-sm" 
-                                                     style={{ width: '42px', height: '42px', backgroundColor: 'var(--sky-500)', fontSize: '1rem' }}>
-                                                    {alumno.nombres.charAt(0)}
-                                                </div>
-                                                <div>
-                                                    <div className="fw-bold text-dark">{`${alumno.apellido_paterno} ${alumno.apellido_materno || ''}`}</div>
-                                                    <div className="text-muted d-flex align-items-center gap-1" style={{ fontSize: '0.85rem' }}>
-                                                        <span>{alumno.nombres}</span> • <span className="fw-medium text-primary">{alumno.codigo_estudiante}</span>
+                                {alumnos.map((alumno) => {
+                                    const espObj = listaEspecialidades.find(e => String(e.codigo) === String(alumno.especialidad));
+                                    const facObj = listaFacultades.find(f => String(f.id) === String(espObj?.facultad_id || alumno.facultad_id));
+                                    
+                                    return (
+                                        <tr key={alumno.id}>
+                                            <td className="ps-4">
+                                                <div className="d-flex align-items-center gap-3">
+                                                    <div className="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white shadow-sm" 
+                                                         style={{ width: '42px', height: '42px', backgroundColor: 'var(--sky-500)', fontSize: '1rem' }}>
+                                                        {alumno.nombres.charAt(0)}
+                                                    </div>
+                                                    <div>
+                                                        <div className="fw-bold text-dark">{`${alumno.apellido_paterno} ${alumno.apellido_materno || ''}`}</div>
+                                                        <div className="text-muted d-flex align-items-center gap-1" style={{ fontSize: '0.85rem' }}>
+                                                            <span>{alumno.nombres}</span> — <span className="fw-medium text-primary">{alumno.codigo_estudiante}</span>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div className="fw-semibold text-dark" style={{ fontSize: '0.85rem' }}>
-                                                {alumno.especialidad?.nombre || alumno.especialidad || 'Sin Especialidad'}
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div className="d-flex flex-column gap-1 align-items-start">
-                                                <span className="badge badge-soft-sky px-2 py-1 rounded-pill">{alumno.periodo_ingreso || '2026-II'}</span>
-                                                <span className="badge badge-soft-slate px-2 py-1 rounded-pill">{alumno.modalidad || 'REGULAR'}</span>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div className="d-flex flex-column gap-1 text-muted" style={{ fontSize: '0.85rem' }}>
-                                                <div className="d-flex align-items-center gap-2"><Mail size={14} /> {alumno.correo_institucional || alumno.correo_personal || 'Sin correo'}</div>
-                                                <div className="d-flex align-items-center gap-2"><Phone size={14} /> {alumno.celular || 'Sin teléfono'}</div>
-                                            </div>
-                                        </td>
-                                        <td className="text-end pe-4">
-                                            <button 
-                                                className="btn btn-sm btn-light border text-muted shadow-sm hover-primary"
-                                                onClick={() => abrirModal(alumno)}
-                                                title="Editar Ficha"
-                                                style={{ borderRadius: '6px' }}
-                                            >
-                                                <Pencil size={16} />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
+                                            </td>
+                                            <td>
+                                                <div className="fw-semibold text-dark" style={{ fontSize: '0.85rem' }}>
+                                                    {espObj?.nombre || alumno.especialidad || 'Sin Especialidad'}
+                                                </div>
+                                                <div className="text-muted small" style={{ fontSize: '0.75rem' }}>
+                                                    {facObj?.nombre || 'Sin Facultad'}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div className="d-flex flex-column gap-1 align-items-start">
+                                                    <span className="badge badge-soft-sky px-2 py-1 rounded-pill">{alumno.periodo_ingreso || '2026-II'}</span>
+                                                    <span className="badge badge-soft-slate px-2 py-1 rounded-pill">{alumno.modalidad || 'REGULAR'}</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div className="d-flex flex-column gap-1 text-muted" style={{ fontSize: '0.85rem' }}>
+                                                    <div className="d-flex align-items-center gap-2"><Mail size={14} /> {alumno.correo_institucional || alumno.correo_personal || 'Sin correo'}</div>
+                                                    <div className="d-flex align-items-center gap-2"><Phone size={14} /> {alumno.celular || 'Sin teléfono'}</div>
+                                                </div>
+                                            </td>
+                                            <td className="text-end pe-4">
+                                                <button 
+                                                    className="btn btn-sm btn-light border text-muted shadow-sm hover-primary"
+                                                    onClick={() => abrirModal(alumno)}
+                                                    title="Editar Ficha"
+                                                    style={{ borderRadius: '6px' }}
+                                                >
+                                                    <Pencil size={16} />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>
@@ -528,10 +575,21 @@ export default function GestionAlumnos() {
                                                 <input type="text" className="form-control border-primary bg-light fw-bold" name="codigo_estudiante" value={formulario.codigo_estudiante} onChange={actualizarCampo} required />
                                             </div>
                                             <div className="col-md-4">
+                                                <label className="form-label text-muted small fw-bold">Facultad</label>
+                                                <select className="form-select bg-light border-0" name="facultad_id" value={formulario.facultad_id} onChange={actualizarCampo} required>
+                                                    <option value="">Seleccionar...</option>
+                                                    {listaFacultades.map(fac => (
+                                                        <option key={fac.id} value={fac.id}>
+                                                            {fac.nombre}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div className="col-md-4">
                                                 <label className="form-label text-muted small fw-bold">Especialidad</label>
                                                 <select className="form-select bg-light border-0" name="especialidad" value={formulario.especialidad} onChange={actualizarCampo} required>
                                                     <option value="">Seleccionar...</option>
-                                                    {listaEspecialidades.map(esp => (
+                                                    {especialidadesFormulario.map(esp => (
                                                         <option key={esp.codigo} value={esp.codigo}>
                                                             {esp.nombre}
                                                         </option>
@@ -549,11 +607,11 @@ export default function GestionAlumnos() {
                                                     ))}
                                                 </select>
                                             </div>
-                                            <div className="col-md-6">
+                                            <div className="col-md-4">
                                                 <label className="form-label text-muted small fw-bold">Celular de Contacto</label>
                                                 <input type="text" className="form-control bg-light border-0" name="celular" value={formulario.celular} onChange={actualizarCampo} />
                                             </div>
-                                            <div className="col-md-6">
+                                            <div className="col-md-4">
                                                 <label className="form-label text-muted small fw-bold">Correo Institucional</label>
                                                 <input type="email" className="form-control bg-light border-0" name="correo_institucional" value={formulario.correo_institucional} onChange={actualizarCampo} />
                                             </div>
