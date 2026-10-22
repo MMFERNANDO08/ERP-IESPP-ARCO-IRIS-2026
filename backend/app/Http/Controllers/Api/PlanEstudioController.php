@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\PlanEstudio;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use App\Models\ModalidadEstudio;
 
 class PlanEstudioController extends Controller
 {
@@ -169,5 +170,49 @@ class PlanEstudioController extends Controller
             'success' => true,
             'message' => 'Plan de estudio eliminado correctamente',
         ], 200);
+    }
+
+    // GREGAMOS LISTAS MODIFICAR Y ELIMINAR
+    // Listar todas las modalidades
+    public function indexModalidades()
+    {
+        return response()->json(ModalidadEstudio::all());
+    }
+
+    // Crear nueva modalidad
+    public function storeModalidad(Request $request)
+    {
+        $request->validate([
+            'codigo' => 'required|unique:modalidad_estudios,codigo',
+            'nombre' => 'required',
+            'descripcion' => 'nullable|string',
+            'estado' => 'required|in:ACTIVO,INACTIVO',
+        ]);
+
+        $modalidad = ModalidadEstudio::create($request->all());
+        return response()->json(['message' => 'Modalidad creada con éxito', 'data' => $modalidad], 201);
+    }
+
+    // Actualizar modalidad
+    public function updateModalidad(Request $request, $id)
+    {
+        $modalidad = ModalidadEstudio::findOrFail($id);
+        
+        $request->validate([
+            'codigo' => 'required|unique:modalidad_estudios,codigo,' . $id,
+            'nombre' => 'required',
+            'estado' => 'required|in:ACTIVO,INACTIVO',
+        ]);
+
+        $modalidad->update($request->all());
+        return response()->json(['message' => 'Modalidad actualizada', 'data' => $modalidad]);
+    }
+
+    // Eliminar modalidad
+    public function destroyModalidad($id)
+    {
+        $modalidad = ModalidadEstudio::findOrFail($id);
+        $modalidad->delete();
+        return response()->json(['message' => 'Modalidad eliminada']);
     }
 }
