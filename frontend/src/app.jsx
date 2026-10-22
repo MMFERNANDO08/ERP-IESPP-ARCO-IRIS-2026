@@ -40,6 +40,7 @@ import GestionPlanesEstudio from './pages/global/planesEstudio';
 import GestionModalidades from './pages/global/modalidad';
 import GestionNivelesEducativos from './pages/global/nivelesEducativos';
 import GestionFacultades from './pages/global/facultades';
+import GestionPeriodos from './pages/global/periodos'; // <--- ¡IMPORTACIÓN DEL MÓDULO DE PERIODOS!
 
 // Página de tesorería
 import TreasuryDashboard from './pages/treasury/TreasuryDashboard';
@@ -146,6 +147,11 @@ ReactDOM.createRoot(document.getElementById('root')).render(
                                 <Route
                                     path="/gestion-global/planes-estudio"
                                     element={<GestionPlanesEstudio />}
+                                />
+
+                                <Route
+                                    path="/gestion-global/periodos"
+                                    element={<GestionPeriodos />}
                                 />
 
                                 {/* Tesorería */}

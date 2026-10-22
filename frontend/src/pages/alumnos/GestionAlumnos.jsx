@@ -4,6 +4,7 @@ import { alumnoService } from '../../services/alumnoService';
 import { modalidadService } from '../../services/modalidadService';
 import { especialidadService } from '../../services/especialidadService';
 import { facultadService } from '../../services/facultadService';
+import { periodoService } from '../../services/periodoService';
 
 const FORMULARIO_VACIO = {
     tipo_documento: 'DNI',
@@ -20,13 +21,14 @@ const FORMULARIO_VACIO = {
     modalidad: '', 
     facultad_id: '',
     especialidad: '', 
-    periodo_ingreso: '2026-II',
+    periodo_ingreso: '',
 };
 
 function extraerArreglo(respuesta) {
+    if (!respuesta) return [];
     if (Array.isArray(respuesta)) return respuesta;
-    if (respuesta?.data && Array.isArray(respuesta.data)) return respuesta.data;
-    if (respuesta?.data?.data && Array.isArray(respuesta.data.data)) return respuesta.data.data;
+    if (respuesta.data && Array.isArray(respuesta.data)) return respuesta.data;
+    if (respuesta.data?.data && Array.isArray(respuesta.data.data)) return respuesta.data.data;
     return [];
 }
 
@@ -44,9 +46,7 @@ const premiumStyles = `
         --radius-xl: 16px;
     }
 
-    body {
-        background-color: var(--slate-50);
-    }
+    body { background-color: var(--slate-50); }
 
     .premium-card {
         background: #ffffff;
@@ -84,9 +84,7 @@ const premiumStyles = `
         box-shadow: 0 4px 12px rgba(14, 165, 233, 0.25);
     }
 
-    .premium-input-group {
-        position: relative;
-    }
+    .premium-input-group { position: relative; }
     .premium-input-group .form-control, .premium-input-group .form-select {
         border-radius: 8px;
         border: 1px solid var(--slate-200);
@@ -100,6 +98,11 @@ const premiumStyles = `
         background-color: #fff;
         border-color: var(--sky-500);
         box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1);
+    }
+    .premium-input-group .form-select:disabled {
+        background-color: var(--slate-200);
+        cursor: not-allowed;
+        opacity: 0.7;
     }
     .filter-label {
         font-size: 0.75rem;
@@ -128,9 +131,7 @@ const premiumStyles = `
         font-size: 0.9rem;
         color: var(--slate-800);
     }
-    .premium-table tbody tr:hover td {
-        background-color: var(--slate-50);
-    }
+    .premium-table tbody tr:hover td { background-color: var(--slate-50); }
 
     .badge-soft-sky {
         background-color: rgba(14, 165, 233, 0.1);
@@ -168,11 +169,12 @@ export default function GestionAlumnos() {
     const [listaModalidades, setListaModalidades] = useState([]);
     const [listaFacultades, setListaFacultades] = useState([]);
     const [listaEspecialidades, setListaEspecialidades] = useState([]);
+    const [listaPeriodos, setListaPeriodos] = useState([]);
+    
     const [busquedaRealizada, setBusquedaRealizada] = useState(false);
     const [cargando, setCargando] = useState(false);
     const [guardando, setGuardando] = useState(false);
 
-    // Filtros de búsqueda principal
     const [codigoBusqueda, setCodigoBusqueda] = useState('');
     const [filtroModalidad, setFiltroModalidad] = useState('');
     const [filtroPeriodo, setFiltroPeriodo] = useState('');
@@ -187,18 +189,26 @@ export default function GestionAlumnos() {
     useEffect(() => {
         const cargarDatosBase = async () => {
             try {
-                const [modResp, facResp, espResp] = await Promise.all([
-                    modalidadService.listar({ solo_activos: 1 }),
-                    facultadService.listar({ solo_activos: 1 }),
-                    especialidadService.listar({ solo_activos: 1 })
-                ]);
-                setListaModalidades(extraerArreglo(modResp));
+                const facResp = await facultadService.listar({ solo_activos: 1 });
                 setListaFacultades(extraerArreglo(facResp));
+            } catch (e) { console.error("Error Facultades:", e); }
+
+            try {
+                const espResp = await especialidadService.listar(); 
                 setListaEspecialidades(extraerArreglo(espResp));
-            } catch (error) {
-                console.error("Error al cargar datos base:", error);
-            }
+            } catch (e) { console.error("Error Especialidades:", e); }
+
+            try {
+                const modResp = await modalidadService.listar({ solo_activos: 1 });
+                setListaModalidades(extraerArreglo(modResp));
+            } catch (e) { console.error("Error Modalidades:", e); }
+
+            try {
+                const perResp = await periodoService.listar();
+                setListaPeriodos(extraerArreglo(perResp));
+            } catch (e) { console.error("Error Periodos:", e); }
         };
+        
         cargarDatosBase();
 
         const styleSheet = document.createElement("style");
@@ -263,7 +273,7 @@ export default function GestionAlumnos() {
         const { name, value } = e.target;
         setFormulario(prev => {
             const nuevo = { ...prev, [name]: value };
-            // Si cambia la facultad en el formulario, opcionalmente puedes limpiar la especialidad si no pertenece
+            // Si cambiamos de facultad, reseteamos la especialidad
             if (name === 'facultad_id') {
                 nuevo.especialidad = '';
             }
@@ -291,15 +301,14 @@ export default function GestionAlumnos() {
         }
     };
 
-    // Especialidades filtradas en el formulario según la facultad seleccionada
+    // LÓGICA ESTRICTA: Solo devuelve datos si hay una Facultad seleccionada
     const especialidadesFormulario = formulario.facultad_id 
         ? listaEspecialidades.filter(esp => String(esp.facultad_id) === String(formulario.facultad_id))
-        : listaEspecialidades;
+        : []; 
 
-    // Especialidades filtradas en el panel de búsqueda según el filtro de facultad seleccionado
     const especialidadesFiltroTabla = filtroFacultad
         ? listaEspecialidades.filter(esp => String(esp.facultad_id) === String(filtroFacultad))
-        : listaEspecialidades;
+        : []; 
 
     return (
         <div className="container-fluid px-4 py-5" style={{ maxWidth: '1400px' }}>
@@ -353,9 +362,7 @@ export default function GestionAlumnos() {
                                         <select className="form-select" value={filtroFacultad} onChange={(e) => { setFiltroFacultad(e.target.value); setFiltroEspecialidad(''); }}>
                                             <option value="">Todas</option>
                                             {listaFacultades.map(fac => (
-                                                <option key={fac.id} value={fac.id}>
-                                                    {fac.nombre}
-                                                </option>
+                                                <option key={`fac-${fac.id}`} value={fac.id}>{fac.nombre}</option>
                                             ))}
                                         </select>
                                     </div>
@@ -363,12 +370,15 @@ export default function GestionAlumnos() {
                                 <div className="col-md-3">
                                     <div className="premium-input-group">
                                         <label className="filter-label">Especialidad</label>
-                                        <select className="form-select" value={filtroEspecialidad} onChange={(e) => setFiltroEspecialidad(e.target.value)}>
-                                            <option value="">Todas</option>
+                                        <select 
+                                            className="form-select" 
+                                            value={filtroEspecialidad} 
+                                            onChange={(e) => setFiltroEspecialidad(e.target.value)}
+                                            disabled={!filtroFacultad}
+                                        >
+                                            <option value="">{filtroFacultad ? "Todas" : "Seleccione Facultad..."}</option>
                                             {especialidadesFiltroTabla.map(esp => (
-                                                <option key={esp.codigo} value={esp.codigo}>
-                                                    {esp.nombre}
-                                                </option>
+                                                <option key={`esp-${esp.codigo || esp.id}`} value={esp.codigo || esp.id}>{esp.nombre}</option>
                                             ))}
                                         </select>
                                     </div>
@@ -379,9 +389,7 @@ export default function GestionAlumnos() {
                                         <select className="form-select" value={filtroModalidad} onChange={(e) => setFiltroModalidad(e.target.value)}>
                                             <option value="">Todas</option>
                                             {listaModalidades.map(mod => (
-                                                <option key={mod.codigo} value={mod.codigo}>
-                                                    {mod.nombre}
-                                                </option>
+                                                <option key={`mod-${mod.codigo || mod.id}`} value={mod.codigo || mod.id}>{mod.nombre}</option>
                                             ))}
                                         </select>
                                     </div>
@@ -391,8 +399,9 @@ export default function GestionAlumnos() {
                                         <label className="filter-label"><CalendarClock size={14}/> Periodo</label>
                                         <select className="form-select" value={filtroPeriodo} onChange={(e) => setFiltroPeriodo(e.target.value)}>
                                             <option value="">Todos</option>
-                                            <option value="2026-II">2026-II</option>
-                                            <option value="2026-I">2026-I</option>
+                                            {listaPeriodos.map(per => (
+                                                <option key={`per-${per.codigo || per.id}`} value={per.codigo || per.id}>{per.nombre || per.codigo}</option>
+                                            ))}
                                         </select>
                                     </div>
                                 </div>
@@ -482,7 +491,7 @@ export default function GestionAlumnos() {
                                             </td>
                                             <td>
                                                 <div className="d-flex flex-column gap-1 align-items-start">
-                                                    <span className="badge badge-soft-sky px-2 py-1 rounded-pill">{alumno.periodo_ingreso || '2026-II'}</span>
+                                                    <span className="badge badge-soft-sky px-2 py-1 rounded-pill">{alumno.periodo_ingreso || 'Sin Periodo'}</span>
                                                     <span className="badge badge-soft-slate px-2 py-1 rounded-pill">{alumno.modalidad || 'REGULAR'}</span>
                                                 </div>
                                             </td>
@@ -536,7 +545,7 @@ export default function GestionAlumnos() {
                                     <form id="form-alumno-premium" onSubmit={guardarAlumno}>
                                         
                                         <h6 className="fw-bold mb-3 d-flex align-items-center gap-2 text-primary border-bottom pb-2">
-                                            <UserCircle size={18} /> 1. Datos Personales
+                                            <UserCircle size={18} /> Datos Personales
                                         </h6>
                                         
                                         <div className="row g-3 mb-4">
@@ -566,7 +575,7 @@ export default function GestionAlumnos() {
                                         </div>
 
                                         <h6 className="fw-bold mb-3 d-flex align-items-center gap-2 text-primary border-bottom pb-2 mt-4">
-                                            <BookOpen size={18} /> 2. Datos Institucionales
+                                            <BookOpen size={18} /> Datos Institucionales
                                         </h6>
                                         
                                         <div className="row g-3">
@@ -579,20 +588,23 @@ export default function GestionAlumnos() {
                                                 <select className="form-select bg-light border-0" name="facultad_id" value={formulario.facultad_id} onChange={actualizarCampo} required>
                                                     <option value="">Seleccionar...</option>
                                                     {listaFacultades.map(fac => (
-                                                        <option key={fac.id} value={fac.id}>
-                                                            {fac.nombre}
-                                                        </option>
+                                                        <option key={`modal-fac-${fac.id}`} value={fac.id}>{fac.nombre}</option>
                                                     ))}
                                                 </select>
                                             </div>
                                             <div className="col-md-4">
                                                 <label className="form-label text-muted small fw-bold">Especialidad</label>
-                                                <select className="form-select bg-light border-0" name="especialidad" value={formulario.especialidad} onChange={actualizarCampo} required>
-                                                    <option value="">Seleccionar...</option>
+                                                <select 
+                                                    className="form-select bg-light border-0" 
+                                                    name="especialidad" 
+                                                    value={formulario.especialidad} 
+                                                    onChange={actualizarCampo} 
+                                                    required 
+                                                    disabled={!formulario.facultad_id}
+                                                >
+                                                    <option value="">{formulario.facultad_id ? "Seleccionar..." : "Seleccione Facultad..."}</option>
                                                     {especialidadesFormulario.map(esp => (
-                                                        <option key={esp.codigo} value={esp.codigo}>
-                                                            {esp.nombre}
-                                                        </option>
+                                                        <option key={`modal-esp-${esp.codigo || esp.id}`} value={esp.codigo || esp.id}>{esp.nombre}</option>
                                                     ))}
                                                 </select>
                                             </div>
@@ -601,9 +613,16 @@ export default function GestionAlumnos() {
                                                 <select className="form-select bg-light border-0" name="modalidad" value={formulario.modalidad} onChange={actualizarCampo} required>
                                                     <option value="">Seleccionar...</option>
                                                     {listaModalidades.map(mod => (
-                                                        <option key={mod.codigo} value={mod.codigo}>
-                                                            {mod.nombre}
-                                                        </option>
+                                                        <option key={`modal-mod-${mod.codigo || mod.id}`} value={mod.codigo || mod.id}>{mod.nombre}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div className="col-md-4">
+                                                <label className="form-label text-muted small fw-bold">Periodo de Ingreso</label>
+                                                <select className="form-select bg-light border-0" name="periodo_ingreso" value={formulario.periodo_ingreso} onChange={actualizarCampo} required>
+                                                    <option value="">Seleccionar...</option>
+                                                    {listaPeriodos.map(per => (
+                                                        <option key={`modal-per-${per.codigo || per.id}`} value={per.codigo || per.id}>{per.nombre || per.codigo}</option>
                                                     ))}
                                                 </select>
                                             </div>
@@ -611,7 +630,7 @@ export default function GestionAlumnos() {
                                                 <label className="form-label text-muted small fw-bold">Celular de Contacto</label>
                                                 <input type="text" className="form-control bg-light border-0" name="celular" value={formulario.celular} onChange={actualizarCampo} />
                                             </div>
-                                            <div className="col-md-4">
+                                            <div className="col-12">
                                                 <label className="form-label text-muted small fw-bold">Correo Institucional</label>
                                                 <input type="email" className="form-control bg-light border-0" name="correo_institucional" value={formulario.correo_institucional} onChange={actualizarCampo} />
                                             </div>

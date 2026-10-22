@@ -3,33 +3,32 @@ import {
     Box, Container, Paper, Typography, Button, IconButton, Table, TableBody,
     TableCell, TableContainer, TableHead, TablePagination, TableRow,
     TextField, Tooltip, Alert, CircularProgress, Dialog, DialogTitle,
-    DialogContent, DialogActions, Divider, Grid, MenuItem, InputAdornment,
-    Stack, Chip, FormControlLabel, Checkbox
+    DialogContent, DialogActions, Stack, Chip, FormControlLabel, Checkbox,
+    Grid, MenuItem, InputAdornment, Switch
 } from '@mui/material';
 import {
-    Plus, Search, RefreshCw, Pencil, Trash2, X, Layers, AlertTriangle
+    Plus, Search, RefreshCw, Pencil, Trash2, X, Calendar, AlertTriangle
 } from 'lucide-react';
 
 // ============================================================================
 // 1. IMPORTAR EL SERVICIO Y TEMA DE COLORES
 // ============================================================================
-import { especialidadService as crudService } from '../../services/especialidadService';
+import { periodoService as crudService } from '../../services/periodoService';
 import { THEME_COLORS } from '../../theme/colors';
 
 // ============================================================================
-// 2. CONFIGURACIÓN ESTÁNDAR DEL MÓDULO (CAMBIAR SEGÚN LA TABLA)
+// 2. CONFIGURACIÓN ESTÁNDAR DEL MÓDULO (PERIODO)
 // ============================================================================
 const CONFIG = {
-    titulo: 'Catálogo de Especialidades (IESPP ARCO IRIS)',
-    subtitulo: 'Gestión oficial de registros, códigos y estado de disponibilidad en el sistema.',
-    entidadSingular: 'Especialidad',
-    entidadPlural: 'especialidades',
-    // Llave primaria del registro: usa 'id' (ej. Alumnos) o 'codigo' (ej. Especialidades)
+    titulo: 'Gestión de Periodos Académicos',
+    subtitulo: 'Administra los ciclos académicos, aperturas de actas y accesos web institucionales.',
+    entidadSingular: 'Periodo',
+    entidadPlural: 'periodos',
     llavePrimaria: 'codigo',
-    placeholderBusqueda: 'Buscar por código o nombre...',
-    mostrarFiltroActivos: true, // true si la tabla maneja estado ACTIVO/INACTIVO
-    tamanoModal: 'sm', // 'xs' | 'sm' | 'md' | 'lg'
-    IconoModulo: Layers,
+    placeholderBusqueda: 'Buscar por código (ej. 20262) o nombre (ej. 2026-II)...',
+    mostrarFiltroActivos: false, // Usaremos un filtro específico de estado si se requiere, o se gestiona vía búsqueda
+    tamanoModal: 'md', 
+    IconoModulo: Calendar,
 };
 
 // ============================================================================
@@ -38,49 +37,44 @@ const CONFIG = {
 const FORMULARIO_VACIO = {
     codigo: '',
     nombre: '',
-    estado: 'ACTIVO',
+    flag_per: '1',
+    flag_cur: '0',
+    activo: 'ABIERTO',
+    web_adm: '1',
+    web_doc: '1',
+    web_alu: '1',
+    inicio: '',
+    fin: '',
 };
 
-// Función universal para extraer errores de validación de Laravel (422 / 500)
 function obtenerErrores(error) {
-    const errores = error.response?.data?.errors;
+    const errores = error?.response?.data?.errors;
     if (errores) return Object.values(errores).flat().join(' ');
-    return error.response?.data?.message || 'Ocurrió un error al comunicarse con el servidor.';
+    return error?.response?.data?.message || error?.message || 'Ocurrió un error al comunicarse con el servidor.';
 }
 
-export default function ModuloEstandarPage() {
-    // Estados de datos
+export default function GestionPeriodos() {
     const [registros, setRegistros] = useState([]);
-    const [totalServidor, setTotalServidor] = useState(null); // null = paginación local, número = paginación Laravel
+    const [totalServidor, setTotalServidor] = useState(null);
 
-    // Estados de filtros y paginación
     const [busqueda, setBusqueda] = useState('');
-    const [soloActivos, setSoloActivos] = useState(false);
     const [pagina, setPagina] = useState(0);
     const [filasPorPagina, setFilasPorPagina] = useState(10);
 
-    // Estados de carga
     const [cargando, setCargando] = useState(false);
     const [guardando, setGuardando] = useState(false);
     const [eliminando, setEliminando] = useState(false);
 
-    // Estados del Modal Crear / Editar
     const [modalAbierto, setModalAbierto] = useState(false);
-    const [idEdicion, setIdEdicion] = useState(null); // Guarda el ID o Código original al editar
+    const [idEdicion, setIdEdicion] = useState(null);
     const [formulario, setFormulario] = useState(FORMULARIO_VACIO);
 
-    // Estados del Modal Confirmar Eliminación
     const [registroAEliminar, setRegistroAEliminar] = useState(null);
-
-    // Alerta de Feedback
     const [feedback, setFeedback] = useState(null);
 
     const inputStyle = { '& .MuiOutlinedInput-root': { borderRadius: 2 } };
     const { IconoModulo } = CONFIG;
 
-    // ------------------------------------------------------------------------
-    // CARGAR REGISTROS (Soporta tanto get() como paginate() de Laravel)
-    // ------------------------------------------------------------------------
     const cargarRegistros = useCallback(async () => {
         setCargando(true);
         try {
@@ -89,16 +83,13 @@ export default function ModuloEstandarPage() {
                 per_page: filasPorPagina,
             };
             if (busqueda.trim()) params.buscar = busqueda.trim();
-            if (CONFIG.mostrarFiltroActivos && soloActivos) params.solo_activos = 1;
 
             const respuesta = await crudService.listar(params);
 
             if (Array.isArray(respuesta)) {
-                // Cuando Laravel responde con ->get()
                 setRegistros(respuesta);
                 setTotalServidor(null);
             } else if (Array.isArray(respuesta?.data)) {
-                // Cuando Laravel responde con ->paginate() o Resource
                 setRegistros(respuesta.data);
                 setTotalServidor(typeof respuesta.total === 'number' ? respuesta.total : null);
             } else {
@@ -111,15 +102,12 @@ export default function ModuloEstandarPage() {
         } finally {
             setCargando(false);
         }
-    }, [busqueda, soloActivos, pagina, filasPorPagina]);
+    }, [busqueda, pagina, filasPorPagina]);
 
     useEffect(() => {
         cargarRegistros();
     }, [cargarRegistros]);
 
-    // ------------------------------------------------------------------------
-    // MANEJO DE FORMULARIO Y MODALES
-    // ------------------------------------------------------------------------
     const actualizarCampo = (campo, valor) => {
         setFormulario((prev) => ({ ...prev, [campo]: valor }));
     };
@@ -134,13 +122,23 @@ export default function ModuloEstandarPage() {
         const identificador = fila[CONFIG.llavePrimaria];
         try {
             const detalle = await crudService.obtener(identificador);
+            const dataObj = detalle?.data || detalle;
             setIdEdicion(identificador);
-            setFormulario({ ...FORMULARIO_VACIO, ...detalle });
+            setFormulario({
+                ...FORMULARIO_VACIO,
+                ...dataObj,
+                inicio: dataObj.inicio ? String(dataObj.inicio).slice(0, 10) : '',
+                fin: dataObj.fin ? String(dataObj.fin).slice(0, 10) : '',
+            });
             setModalAbierto(true);
         } catch {
-            // Respaldo inmediato con los datos de la fila si la API no tiene ruta show()
             setIdEdicion(identificador);
-            setFormulario({ ...FORMULARIO_VACIO, ...fila });
+            setFormulario({
+                ...FORMULARIO_VACIO,
+                ...fila,
+                inicio: fila.inicio ? String(fila.inicio).slice(0, 10) : '',
+                fin: fila.fin ? String(fila.fin).slice(0, 10) : '',
+            });
             setModalAbierto(true);
         }
     };
@@ -151,14 +149,10 @@ export default function ModuloEstandarPage() {
         setIdEdicion(null);
     };
 
-    // ------------------------------------------------------------------------
-    // GUARDAR (CREAR O ACTUALIZAR)
-    // ------------------------------------------------------------------------
     const guardarRegistro = async (event) => {
         event.preventDefault();
         setGuardando(true);
 
-        // Normalización automática de strings
         const payload = Object.keys(formulario).reduce((acc, key) => {
             const valor = formulario[key];
             acc[key] = typeof valor === 'string' ? valor.trim() : valor;
@@ -193,9 +187,6 @@ export default function ModuloEstandarPage() {
         }
     };
 
-    // ------------------------------------------------------------------------
-    // ELIMINAR CON DIALOG DE CONFIRMACIÓN
-    // ------------------------------------------------------------------------
     const confirmarEliminacion = async () => {
         if (!registroAEliminar) return;
         const identificador = registroAEliminar[CONFIG.llavePrimaria];
@@ -216,7 +207,6 @@ export default function ModuloEstandarPage() {
         }
     };
 
-    // Si el servidor no pagina, paginamos en el cliente automáticamente
     const filasVisibles = totalServidor !== null
         ? registros
         : registros.slice(pagina * filasPorPagina, pagina * filasPorPagina + filasPorPagina);
@@ -226,7 +216,7 @@ export default function ModuloEstandarPage() {
     return (
         <Container maxWidth="xl" sx={{ mt: 3, mb: 4 }}>
 
-            {/* 1. ENCABEZADO ESTÁNDAR */}
+            {/* ENCABEZADO */}
             <Box
                 sx={{
                     display: 'flex',
@@ -260,11 +250,11 @@ export default function ModuloEstandarPage() {
                         boxShadow: '0 2px 8px rgba(2, 132, 199, 0.25)',
                     }}
                 >
-                    {`Nuevo(a) ${CONFIG.entidadSingular}`}
+                    {`Nuevo ${CONFIG.entidadSingular}`}
                 </Button>
             </Box>
 
-            {/* 2. ALERTA DE FEEDBACK */}
+            {/* FEEDBACK */}
             {feedback && (
                 <Alert
                     severity={feedback.type}
@@ -275,7 +265,7 @@ export default function ModuloEstandarPage() {
                 </Alert>
             )}
 
-            {/* 3. BARRA DE BÚSQUEDA Y FILTROS */}
+            {/* FILTROS */}
             <Paper
                 elevation={0}
                 sx={{
@@ -309,26 +299,6 @@ export default function ModuloEstandarPage() {
                             ),
                         }}
                     />
-
-                    {CONFIG.mostrarFiltroActivos && (
-                        <FormControlLabel
-                            control={
-                                <Checkbox
-                                    size="small"
-                                    checked={soloActivos}
-                                    onChange={(e) => {
-                                        setSoloActivos(e.target.checked);
-                                        setPagina(0);
-                                    }}
-                                />
-                            }
-                            label={
-                                <Typography variant="body2" sx={{ color: THEME_COLORS.textSecondary, fontWeight: 500 }}>
-                                    Mostrar solo activos
-                                </Typography>
-                            }
-                        />
-                    )}
                 </Box>
 
                 <Box sx={{ display: 'flex', gap: 1 }}>
@@ -346,7 +316,6 @@ export default function ModuloEstandarPage() {
                         startIcon={<RefreshCw size={16} />}
                         onClick={() => {
                             setBusqueda('');
-                            setSoloActivos(false);
                             setPagina(0);
                         }}
                         size="small"
@@ -357,28 +326,35 @@ export default function ModuloEstandarPage() {
                 </Box>
             </Paper>
 
-            {/* 4. TABLA DE DATOS (PERSONALIZAR COLUMNAS AQUÍ) */}
+            {/* TABLA */}
             <TableContainer component={Paper} elevation={0} sx={{ border: `1px solid ${THEME_COLORS.border}`, borderRadius: 2 }}>
-                <Table sx={{ minWidth: 750 }}>
+                <Table sx={{ minWidth: 1000 }}>
                     <TableHead sx={{ backgroundColor: '#f8fafc' }}>
                         <TableRow>
-                            <TableCell sx={{ fontWeight: 700, width: '20%' }}>Código</TableCell>
-                            <TableCell sx={{ fontWeight: 700, width: '50%' }}>Nombre / Descripción</TableCell>
-                            <TableCell align="center" sx={{ fontWeight: 700, width: '15%' }}>Estado</TableCell>
-                            <TableCell align="center" sx={{ fontWeight: 700, width: '15%' }}>Acciones</TableCell>
+                            <TableCell sx={{ fontWeight: 700 }}>Código</TableCell>
+                            <TableCell sx={{ fontWeight: 700 }}>Nombre</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 700 }}>Flag Per</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 700 }}>Flag Cur</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 700 }}>Estado</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 700 }}>Web Adm</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 700 }}>Web Doc</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 700 }}>Web Alu</TableCell>
+                            <TableCell sx={{ fontWeight: 700 }}>Inicio</TableCell>
+                            <TableCell sx={{ fontWeight: 700 }}>Fin</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 700 }}>Acciones</TableCell>
                         </TableRow>
                     </TableHead>
 
                     <TableBody>
                         {cargando ? (
                             <TableRow>
-                                <TableCell colSpan={4} align="center" sx={{ py: 6 }}>
+                                <TableCell colSpan={11} align="center" sx={{ py: 6 }}>
                                     <CircularProgress size={30} />
                                 </TableCell>
                             </TableRow>
                         ) : filasVisibles.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={4} align="center" sx={{ py: 5, color: THEME_COLORS.textSecondary }}>
+                                <TableCell colSpan={11} align="center" sx={{ py: 5, color: THEME_COLORS.textSecondary }}>
                                     <IconoModulo size={40} color={THEME_COLORS.border} style={{ marginBottom: 16 }} />
                                     <Typography variant="body1" sx={{ fontWeight: 600 }}>
                                         {`No se encontraron ${CONFIG.entidadPlural}`}
@@ -391,6 +367,7 @@ export default function ModuloEstandarPage() {
                         ) : (
                             filasVisibles.map((item) => {
                                 const clave = item[CONFIG.llavePrimaria];
+                                const esAbierto = item.activo === 'ABIERTO';
                                 return (
                                     <TableRow hover key={clave}>
                                         <TableCell>
@@ -398,29 +375,51 @@ export default function ModuloEstandarPage() {
                                                 {item.codigo}
                                             </Typography>
                                         </TableCell>
-
                                         <TableCell>
                                             <Typography variant="body2" sx={{ fontWeight: 600, color: THEME_COLORS.textPrimary }}>
                                                 {item.nombre}
                                             </Typography>
                                         </TableCell>
-
+                                        <TableCell align="center">
+                                            <Chip label={String(item.flag_per) === '1' ? 'Sí' : 'No'} size="small" variant="outlined" />
+                                        </TableCell>
+                                        <TableCell align="center">
+                                            <Chip label={String(item.flag_cur) === '1' ? 'Sí' : 'No'} size="small" variant="outlined" />
+                                        </TableCell>
                                         <TableCell align="center">
                                             <Chip
-                                                label={item.estado}
+                                                label={item.activo}
                                                 size="small"
                                                 sx={{
                                                     fontWeight: 700,
                                                     fontSize: '0.72rem',
-                                                    backgroundColor: item.estado === 'ACTIVO' ? '#dcfce7' : '#fee2e2',
-                                                    color: item.estado === 'ACTIVO' ? '#166534' : '#991b1b',
+                                                    backgroundColor: esAbierto ? '#dcfce7' : '#fee2e2',
+                                                    color: esAbierto ? '#166534' : '#991b1b',
                                                 }}
                                             />
                                         </TableCell>
-
+                                        <TableCell align="center">
+                                            <Chip label={String(item.web_adm) === '1' ? 'Sí' : 'No'} size="small" variant="outlined" />
+                                        </TableCell>
+                                        <TableCell align="center">
+                                            <Chip label={String(item.web_doc) === '1' ? 'Sí' : 'No'} size="small" variant="outlined" />
+                                        </TableCell>
+                                        <TableCell align="center">
+                                            <Chip label={String(item.web_alu) === '1' ? 'Sí' : 'No'} size="small" variant="outlined" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Typography variant="body2" sx={{ color: THEME_COLORS.textSecondary }}>
+                                                {item.inicio ? String(item.inicio).slice(0, 10) : '—'}
+                                            </Typography>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Typography variant="body2" sx={{ color: THEME_COLORS.textSecondary }}>
+                                                {item.fin ? String(item.fin).slice(0, 10) : '—'}
+                                            </Typography>
+                                        </TableCell>
                                         <TableCell align="center">
                                             <Stack direction="row" spacing={1} justifyContent="center">
-                                                <Tooltip title={`Editar ${CONFIG.entidadSingular}`}>
+                                                <Tooltip title="Editar Periodo">
                                                     <IconButton
                                                         onClick={() => abrirModalEdicion(item)}
                                                         size="small"
@@ -434,8 +433,7 @@ export default function ModuloEstandarPage() {
                                                         <Pencil size={16} />
                                                     </IconButton>
                                                 </Tooltip>
-
-                                                <Tooltip title={`Eliminar ${CONFIG.entidadSingular}`}>
+                                                <Tooltip title="Eliminar Periodo">
                                                     <IconButton
                                                         onClick={() => setRegistroAEliminar(item)}
                                                         size="small"
@@ -473,7 +471,7 @@ export default function ModuloEstandarPage() {
                 />
             </TableContainer>
 
-            {/* 5. MODAL DE CREACIÓN / EDICIÓN (PERSONALIZAR INPUTS AQUÍ) */}
+            {/* MODAL CREAR / EDITAR */}
             <Dialog
                 open={modalAbierto}
                 onClose={cerrarModal}
@@ -489,12 +487,10 @@ export default function ModuloEstandarPage() {
                             </Box>
                             <Box>
                                 <Typography variant="h6" sx={{ fontWeight: 700, color: THEME_COLORS.textPrimary, lineHeight: 1.2 }}>
-                                    {idEdicion !== null
-                                        ? `Actualizar ${CONFIG.entidadSingular} (${idEdicion})`
-                                        : `Nuevo(a) ${CONFIG.entidadSingular}`}
+                                    {idEdicion !== null ? `Actualizar Periodo (${idEdicion})` : 'Nuevo Periodo'}
                                 </Typography>
                                 <Typography variant="caption" sx={{ color: THEME_COLORS.textSecondary }}>
-                                    Completa los campos requeridos en el formulario
+                                    Configuración de ciclos y permisos institucionales
                                 </Typography>
                             </Box>
                         </Stack>
@@ -504,52 +500,136 @@ export default function ModuloEstandarPage() {
                     </DialogTitle>
 
                     <DialogContent sx={{ p: 3 }}>
-                        <Grid container spacing={2.5}>
-                            <Grid item xs={12}>
-                                <Typography variant="overline" sx={{ fontWeight: 800, color: THEME_COLORS.textSecondary }}>
-                                    1. Datos Generales
-                                </Typography>
-                            </Grid>
-
-                            <Grid item xs={12} sm={5}>
+                        <Grid container spacing={2.5} sx={{ mt: 0.5 }}>
+                            <Grid item xs={12} sm={6}>
                                 <TextField
                                     fullWidth
                                     required
-                                    label="Código"
-                                    placeholder="Ej. EF, EI"
+                                    label="Periodo (Código)"
+                                    placeholder="Ej. 20262"
                                     size="small"
                                     value={formulario.codigo}
-                                    disabled={idEdicion !== null && CONFIG.llavePrimaria === 'codigo'}
+                                    disabled={idEdicion !== null}
                                     onChange={(e) => actualizarCampo('codigo', e.target.value.toUpperCase())}
                                     sx={inputStyle}
                                 />
                             </Grid>
-
-                            <Grid item xs={12} sm={7}>
+                            <Grid item xs={12} sm={6}>
                                 <TextField
-                                    select
                                     fullWidth
                                     required
-                                    label="Estado"
+                                    label="Nombre"
+                                    placeholder="Ej. 2026-II"
                                     size="small"
-                                    value={formulario.estado}
-                                    onChange={(e) => actualizarCampo('estado', e.target.value)}
+                                    value={formulario.nombre}
+                                    onChange={(e) => actualizarCampo('nombre', e.target.value)}
                                     sx={inputStyle}
-                                >
-                                    <MenuItem value="ACTIVO">ACTIVO</MenuItem>
-                                    <MenuItem value="INACTIVO">INACTIVO</MenuItem>
-                                </TextField>
+                                />
+                            </Grid>
+
+                            <Grid item xs={12}>
+                                <Divider />
+                            </Grid>
+
+                            <Grid item xs={12} sm={4}>
+                                <FormControlLabel
+                                    control={
+                                        <Switch
+                                            checked={formulario.flag_per === '1'}
+                                            onChange={(e) => actualizarCampo('flag_per', e.target.checked ? '1' : '0')}
+                                        />
+                                    }
+                                    label={<Typography variant="body2" sx={{ fontWeight: 600 }}>Flag Per</Typography>}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={4}>
+                                <FormControlLabel
+                                    control={
+                                        <Switch
+                                            checked={formulario.flag_cur === '1'}
+                                            onChange={(e) => actualizarCampo('flag_cur', e.target.checked ? '1' : '0')}
+                                        />
+                                    }
+                                    label={<Typography variant="body2" sx={{ fontWeight: 600 }}>Flag Cur</Typography>}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={4}>
+                                <FormControlLabel
+                                    control={
+                                        <Switch
+                                            checked={formulario.web_adm === '1'}
+                                            onChange={(e) => actualizarCampo('web_adm', e.target.checked ? '1' : '0')}
+                                        />
+                                    }
+                                    label={<Typography variant="body2" sx={{ fontWeight: 600 }}>Web Adm</Typography>}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={4}>
+                                <FormControlLabel
+                                    control={
+                                        <Switch
+                                            checked={formulario.web_doc === '1'}
+                                            onChange={(e) => actualizarCampo('web_doc', e.target.checked ? '1' : '0')}
+                                        />
+                                    }
+                                    label={<Typography variant="body2" sx={{ fontWeight: 600 }}>Web Doc</Typography>}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={4}>
+                                <FormControlLabel
+                                    control={
+                                        <Switch
+                                            checked={formulario.web_alu === '1'}
+                                            onChange={(e) => actualizarCampo('web_alu', e.target.checked ? '1' : '0')}
+                                        />
+                                    }
+                                    label={<Typography variant="body2" sx={{ fontWeight: 600 }}>Web Alu</Typography>}
+                                />
+                            </Grid>
+
+                            <Grid item xs={12}>
+                                <Divider />
                             </Grid>
 
                             <Grid item xs={12}>
                                 <TextField
+                                    select
                                     fullWidth
                                     required
-                                    label={`Nombre de ${CONFIG.entidadSingular}`}
-                                    placeholder="Ingrese el nombre oficial"
+                                    label="Estado Activo"
                                     size="small"
-                                    value={formulario.nombre}
-                                    onChange={(e) => actualizarCampo('nombre', e.target.value)}
+                                    value={formulario.activo}
+                                    onChange={(e) => actualizarCampo('activo', e.target.value)}
+                                    sx={inputStyle}
+                                >
+                                    <MenuItem value="ABIERTO">ABIERTO (Permite re-abrir actas, registrar asistencia)</MenuItem>
+                                    <MenuItem value="CERRADO">CERRADO</MenuItem>
+                                </TextField>
+                            </Grid>
+
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    fullWidth
+                                    required
+                                    type="date"
+                                    label="Fecha Inicio"
+                                    InputLabelProps={{ shrink: true }}
+                                    size="small"
+                                    value={formulario.inicio}
+                                    onChange={(e) => actualizarCampo('inicio', e.target.value)}
+                                    sx={inputStyle}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    fullWidth
+                                    required
+                                    type="date"
+                                    label="Fecha Fin"
+                                    InputLabelProps={{ shrink: true }}
+                                    size="small"
+                                    value={formulario.fin}
+                                    onChange={(e) => actualizarCampo('fin', e.target.value)}
                                     sx={inputStyle}
                                 />
                             </Grid>
@@ -583,7 +663,7 @@ export default function ModuloEstandarPage() {
                 </Box>
             </Dialog>
 
-            {/* 6. MODAL ESTÁNDAR DE CONFIRMACIÓN DE ELIMINACIÓN */}
+            {/* MODAL ELIMINAR */}
             <Dialog
                 open={Boolean(registroAEliminar)}
                 onClose={() => !eliminando && setRegistroAEliminar(null)}
@@ -601,7 +681,7 @@ export default function ModuloEstandarPage() {
                 </DialogTitle>
                 <DialogContent sx={{ px: 3, pb: 2 }}>
                     <Typography variant="body2" sx={{ color: THEME_COLORS.textSecondary }}>
-                        ¿Estás seguro de que deseas eliminar <strong>{registroAEliminar?.[CONFIG.llavePrimaria]}</strong>? Esta acción no se puede deshacer.
+                        ¿Estás seguro de que deseas eliminar el periodo <strong>{registroAEliminar?.nombre}</strong>? Esta acción no se puede deshacer.
                     </Typography>
                 </DialogContent>
                 <DialogActions sx={{ p: 2.5, borderTop: `1px solid ${THEME_COLORS.border}`, gap: 1 }}>
