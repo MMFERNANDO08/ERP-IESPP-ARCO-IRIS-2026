@@ -14,16 +14,20 @@ return new class extends Migration
         Schema::create('alumnos', function (Blueprint $table) {
             $table->id();
 
-            // Nombres y apellidos separados
+            // Identidad y Nombres
             $table->string('nombres', 100);
             $table->string('apellido_paterno', 100);
-            $table->string('apellido_materno', 100)->nullable(); // Recomendable nullable por si hay estudiantes extranjeros con un solo apellido
+            $table->string('apellido_materno', 100)->nullable();
 
+            // Documentación
             $table->string('tipo_documento', 50);
             $table->string('numero_documento', 20)->unique();
+            
+            // Datos personales adicionales
             $table->string('sexo', 20)->nullable();
             $table->date('fecha_nacimiento')->nullable();
 
+            // Datos institucionales y contacto
             $table->string('codigo_estudiante', 30)->unique();
             $table->string('celular', 20)->nullable();
             $table->string('correo_institucional', 150)->nullable()->unique();

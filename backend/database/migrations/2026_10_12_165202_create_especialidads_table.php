@@ -11,9 +11,12 @@ return new class extends Migration
         Schema::create('especialidades', function (Blueprint $table) {
             $table->id();
             
+            // Relación con la tabla facultades (agregada)
+            $table->foreignId('facultad_id')->constrained('facultades')->onDelete('restrict');
+
             // Campos principales
             $table->string('codigo', 50)->unique(); // Ej: EF, EI
-            $table->string('nombre', 200); // Ej: EF - EDUCACIÓN FÍSICA
+            $table->string('nombre', 200); // Ej: EDUCACIÓN FÍSICA
             $table->string('estado', 20)->default('ACTIVO'); // ACTIVO / INACTIVO
 
             $table->timestamps();

@@ -1,17 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-    Box, Container, Paper, Typography, Button, Table, TableBody,
-    TableCell, TableContainer, TableHead, TablePagination, TableRow,
-    TextField, Tooltip, Alert, CircularProgress, Dialog, DialogTitle,
-    DialogContent, DialogActions, Grid, MenuItem, InputAdornment, Stack,
-    Chip, FormControlLabel, Checkbox, Fade, IconButton
-} from '@mui/material';
-import {
-    Plus, Search, RefreshCw, X, Globe, Edit2, Trash2, Hash, AlignLeft, AlertTriangle
-} from 'lucide-react';
-
+import { Search, RefreshCcw, Filter, Plus, Trash2, Pencil, Globe, AlertTriangle, X, CheckCircle2, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { modalidadService } from '../../services/modalidadService';
-import { THEME_COLORS } from '../../theme/colors';
 
 const FORMULARIO_VACIO = {
     id: null,
@@ -34,625 +23,660 @@ function extraerArreglo(respuesta) {
     return [];
 }
 
+const premiumStyles = `
+    :root {
+        --slate-50: #f8fafc;
+        --slate-100: #f1f5f9;
+        --slate-200: #e2e8f0;
+        --slate-600: #475569;
+        --slate-800: #1e293b;
+        --slate-900: #0f172a; 
+        --teal-500: #14b8a6;
+        --teal-600: #0d9488;
+        --teal-700: #0f766e;
+        --sky-500: #0ea5e9; 
+        --sky-600: #0284c7;
+        --danger-500: #ef4444;
+        --danger-600: #dc2626;
+        --warning-500: #f59e0b;
+        --warning-600: #d97706;
+        --radius-lg: 12px;
+        --radius-xl: 16px;
+    }
+
+    body {
+        background-color: var(--slate-50);
+    }
+
+    .premium-card {
+        background: #ffffff;
+        border-radius: var(--radius-lg);
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+        transition: box-shadow 0.3s ease;
+    }
+
+    .btn-premium-dark {
+        background-color: var(--slate-900);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    .btn-premium-dark:hover {
+        background-color: var(--slate-800);
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+    }
+
+    .btn-premium-accent {
+        background-color: var(--teal-600);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    .btn-premium-accent:hover {
+        background-color: var(--teal-700);
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(13, 148, 136, 0.25);
+    }
+
+    .premium-input-group {
+        position: relative;
+    }
+    .premium-input-group .form-control, .premium-input-group .form-select {
+        border-radius: 8px;
+        border: 1px solid var(--slate-200);
+        padding: 0.65rem 1rem;
+        font-size: 0.9rem;
+        color: var(--slate-800);
+        background-color: var(--slate-50);
+        transition: all 0.2s;
+    }
+    .premium-input-group .form-control:focus, .premium-input-group .form-select:focus {
+        background-color: #fff;
+        border-color: var(--teal-500);
+        box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.1);
+    }
+    .filter-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--slate-600);
+        margin-bottom: 0.4rem;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .premium-table {
+        margin-bottom: 0;
+    }
+    .premium-table th {
+        background-color: #ffffff;
+        color: var(--slate-600);
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 1.25rem 1rem;
+        border-bottom: 2px solid var(--slate-100);
+    }
+    .premium-table td {
+        padding: 1.25rem 1rem;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--slate-100);
+        font-size: 0.9rem;
+        color: var(--slate-800);
+    }
+    .premium-table tbody tr:hover td {
+        background-color: var(--slate-50);
+    }
+
+    .badge-soft-success {
+        background-color: #dcfce7;
+        color: #166534;
+        border: 1px solid #bbf7d0;
+    }
+    .badge-soft-danger {
+        background-color: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fecaca;
+    }
+
+    .modal-content.premium-modal {
+        border: none;
+        border-radius: var(--radius-xl);
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+    .premium-modal .modal-header {
+        background: linear-gradient(to right, var(--slate-900), #1e293b);
+        color: white;
+        border-bottom: none;
+        padding: 1.5rem;
+        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    }
+    .premium-modal.modal-danger .modal-header {
+        background: white;
+        color: var(--slate-900);
+        border-bottom: 1px solid var(--slate-200);
+    }
+    .premium-modal.modal-warning .modal-header {
+        background: white;
+        color: var(--slate-900);
+        border-bottom: 1px solid var(--slate-200);
+    }
+    .premium-modal .modal-footer {
+        background-color: var(--slate-50);
+        border-top: 1px solid var(--slate-200);
+        padding: 1.25rem 1.5rem;
+        border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+    }
+`;
+
 export default function GestionModalidades() {
-    // Estado principal de modalidades
-    const [modalidades, setModalidades] = useState([]);
-    
-    // Estados de búsqueda, filtro y paginación
     const [busqueda, setBusqueda] = useState('');
-    const [soloActivos, setSoloActivos] = useState(false);
+    const [busquedaAplicada, setBusquedaAplicada] = useState('');
+    const [modalidades, setModalidades] = useState([]);
     const [pagina, setPagina] = useState(0);
     const [filasPorPagina, setFilasPorPagina] = useState(10);
 
-    // Estados de carga y retroalimentación
     const [cargando, setCargando] = useState(false);
     const [guardando, setGuardando] = useState(false);
-    const [eliminando, setEliminando] = useState(false);
     const [feedback, setFeedback] = useState(null);
 
-    // Estados de Modales
-    const [modalAbierto, setModalAbierto] = useState(false);
-    const [modoEdicion, setModoEdicion] = useState(false);
+    const [modalFormularioAbierto, setModalFormularioAbierto] = useState(false);
     const [formulario, setFormulario] = useState(FORMULARIO_VACIO);
+    const [modalidadACambiarEstado, setModalidadACambiarEstado] = useState(null);
     const [modalidadAEliminar, setModalidadAEliminar] = useState(null);
+    const [eliminando, setEliminando] = useState(false);
 
-    // Carga de datos: Modalidades
-    const cargarDatos = useCallback(async () => {
+    useEffect(() => {
+        const styleSheet = document.createElement("style");
+        styleSheet.innerText = premiumStyles;
+        document.head.appendChild(styleSheet);
+        return () => styleSheet.remove();
+    }, []);
+
+    const cargarModalidades = useCallback(async () => {
         setCargando(true);
         setFeedback(null);
         try {
-            const params = {};
-            if (soloActivos) params.solo_activos = 1;
-            
-            const resp = await modalidadService.listar(params);
-            let lista = extraerArreglo(resp);
-
-            // Filtro local de búsqueda por código o nombre
-            if (busqueda.trim()) {
-                const term = busqueda.toLowerCase().trim();
-                lista = lista.filter(m => 
-                    (m.codigo && String(m.codigo).toLowerCase().includes(term)) || 
-                    (m.nombre && String(m.nombre).toLowerCase().includes(term)) ||
-                    (m.descripcion && String(m.descripcion).toLowerCase().includes(term))
-                );
-            }
-
-            setModalidades(lista);
+            const resp = await modalidadService.listar();
+            setModalidades(extraerArreglo(resp));
         } catch (error) {
             setModalidades([]);
-            setFeedback({ type: 'error', message: obtenerErrores(error) });
+            mostrarFeedback('error', obtenerErrores(error));
         } finally {
             setCargando(false);
         }
-    }, [busqueda, soloActivos]);
+    }, []);
 
     useEffect(() => {
-        cargarDatos();
-    }, [cargarDatos]);
+        cargarModalidades();
+    }, [cargarModalidades]);
 
-    // Abrir modal para crear
-    const abrirCrearModalidad = () => {
-        setModoEdicion(false);
+    const mostrarFeedback = (tipo, mensaje) => {
+        setFeedback({ tipo, message: mensaje });
+        setTimeout(() => setFeedback(null), 4000);
+    };
+
+    const abrirModalNuevo = () => {
         setFormulario(FORMULARIO_VACIO);
-        setModalAbierto(true);
+        setModalFormularioAbierto(true);
     };
 
-    // Abrir modal para editar
-    const abrirEditarModalidad = (modalidad) => {
-        setModoEdicion(true);
+    const abrirModalEditar = (item) => {
         setFormulario({
-            id: modalidad.id || modalidad.codigo,
-            codigo: modalidad.codigo || '',
-            nombre: modalidad.nombre || '',
-            descripcion: modalidad.descripcion || '',
-            estado: modalidad.estado || 'ACTIVO',
+            id: item.id || null,
+            codigo: item.codigo || '',
+            nombre: item.nombre || '',
+            descripcion: item.descripcion || '',
+            estado: item.estado || 'ACTIVO',
         });
-        setModalAbierto(true);
+        setModalFormularioAbierto(true);
     };
 
-    const cerrarModal = () => {
+    const cerrarModalFormulario = () => {
         if (guardando) return;
-        setModalAbierto(false);
+        setModalFormularioAbierto(false);
     };
 
-    const actualizarCampo = (campo, valor) => setFormulario((prev) => ({ ...prev, [campo]: valor }));
+    const actualizarCampo = (e) => {
+        const { name, value } = e.target;
+        setFormulario((prev) => ({ ...prev, [name]: value }));
+    };
 
-    const guardarModalidad = async (event) => {
-        event.preventDefault();
+    const guardarModalidad = async (e) => {
+        e.preventDefault();
         setGuardando(true);
 
-        const codigoMod = formulario.codigo.trim().toUpperCase();
-        const datos = {
-            codigo: codigoMod,
-            nombre: formulario.nombre.trim(),
-            descripcion: formulario.descripcion.trim(),
-            estado: formulario.estado,
-        };
-
         try {
-            if (modoEdicion) {
-                if (modalidadService.actualizar) {
-                    await modalidadService.actualizar(formulario.id, datos);
-                } else {
-                    await modalidadService.registrar({ ...datos, id: formulario.id });
-                }
-                setFeedback({ type: 'success', message: `Modalidad "${codigoMod}" actualizada correctamente.` });
+            if (formulario.id) {
+                await modalidadService.actualizar(formulario.id, formulario);
+                mostrarFeedback('success', `Modalidad "${formulario.nombre}" actualizada correctamente.`);
             } else {
-                await modalidadService.registrar(datos);
-                setFeedback({ type: 'success', message: `Modalidad "${codigoMod}" registrada correctamente.` });
+                await modalidadService.registrar(formulario);
+                mostrarFeedback('success', `Modalidad "${formulario.nombre}" registrada correctamente.`);
             }
-
-            setModalAbierto(false);
-            await cargarDatos();
+            setModalFormularioAbierto(false);
+            await cargarModalidades();
         } catch (error) {
-            setFeedback({ type: 'error', message: obtenerErrores(error) });
+            mostrarFeedback('error', obtenerErrores(error));
         } finally {
             setGuardando(false);
         }
     };
 
-    const confirmarEliminacion = async () => {
-        if (!modalidadAEliminar) return;
-        setEliminando(true);
+    const cambiarEstadoModalidad = async () => {
+        if (!modalidadACambiarEstado) return;
+        setGuardando(true);
+        const nuevoEstado = modalidadACambiarEstado.estado === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
+        const targetKey = modalidadACambiarEstado.id || modalidadACambiarEstado.codigo;
 
         try {
-            const idAEliminar = modalidadAEliminar.id || modalidadAEliminar.codigo;
-            await modalidadService.eliminar(idAEliminar);
-            
-            setFeedback({ type: 'success', message: `Modalidad "${modalidadAEliminar.codigo}" eliminada correctamente.` });
-            setModalidadAEliminar(null);
-            await cargarDatos();
+            await modalidadService.actualizar(targetKey, { ...modalidadACambiarEstado, estado: nuevoEstado });
+            mostrarFeedback('success', `La modalidad "${modalidadACambiarEstado.nombre}" cambió a ${nuevoEstado}.`);
+            setModalidadACambiarEstado(null);
+            await cargarModalidades();
         } catch (error) {
-            setFeedback({ type: 'error', message: obtenerErrores(error) });
+            mostrarFeedback('error', obtenerErrores(error));
+        } finally {
+            setGuardando(false);
+        }
+    };
+
+    const eliminarModalidad = async () => {
+        if (!modalidadAEliminar) return;
+        setEliminando(true);
+        const targetKey = modalidadAEliminar.id || modalidadAEliminar.codigo;
+
+        try {
+            await modalidadService.eliminar(targetKey);
+            mostrarFeedback('success', `Modalidad "${modalidadAEliminar.nombre}" eliminada correctamente.`);
+            setModalidadAEliminar(null);
+            await cargarModalidades();
+        } catch (error) {
+            mostrarFeedback('error', obtenerErrores(error));
         } finally {
             setEliminando(false);
         }
     };
 
-    const modalidadesPaginadas = modalidades.slice(
-        pagina * filasPorPagina,
-        pagina * filasPorPagina + filasPorPagina
-    );
+    // Paginación y Filtrado Local
+    const modalidadesFiltradas = modalidades.filter((m) => {
+        if (!busquedaAplicada.trim()) return true;
+        const term = busquedaAplicada.toLowerCase();
+        return (
+            (m.codigo && m.codigo.toLowerCase().includes(term)) ||
+            (m.nombre && m.nombre.toLowerCase().includes(term)) ||
+            (m.descripcion && m.descripcion.toLowerCase().includes(term))
+        );
+    });
 
-    const inputStyle = { 
-        '& .MuiOutlinedInput-root': { 
-            borderRadius: 2,
-            transition: '0.3s ease-in-out',
-            backgroundColor: '#ffffff',
-            '&:hover fieldset': { borderColor: THEME_COLORS.primary },
-            '&.Mui-focused fieldset': { boxShadow: `0 0 0 3px ${THEME_COLORS.primary}20` }
-        } 
-    };
+    const totalPaginas = Math.ceil(modalidadesFiltradas.length / filasPorPagina);
+    const modalidadesPaginadas = modalidadesFiltradas.slice(pagina * filasPorPagina, pagina * filasPorPagina + filasPorPagina);
 
     return (
-        <Fade in={true} timeout={500}>
-            <Container maxWidth="xl" sx={{ mt: { xs: 2, md: 4 }, mb: 4 }}>
+        <div className="container-fluid px-4 py-5" style={{ maxWidth: '1400px' }}>
+            
+            {/* Header */}
+            <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+                <div>
+                    <h2 className="fw-bold mb-1" style={{ color: 'var(--slate-900)', letterSpacing: '-0.5px' }}>
+                        Gestión Global — Modalidades
+                    </h2>
+                    <p className="mb-0 text-muted d-flex align-items-center gap-2">
+                        <Globe size={16} /> <span>Configura las modalidades de estudio (Presencial, Semipresencial, Virtual, etc.).</span>
+                    </p>
+                </div>
+                <button onClick={abrirModalNuevo} className="btn btn-premium-dark px-4 py-2 d-flex align-items-center gap-2">
+                    <Plus size={18} /> <span>Nueva Modalidad</span>
+                </button>
+            </div>
 
-                {/* --- HEADER --- */}
-                <Box
-                    sx={{
-                        display: 'flex',
-                        flexDirection: { xs: 'column', sm: 'row' },
-                        justifyContent: 'space-between',
-                        alignItems: { xs: 'flex-start', sm: 'center' },
-                        gap: 2,
-                        mb: 4,
-                    }}
-                >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Box 
-                            sx={{ 
-                                p: 1.5, 
-                                borderRadius: 3, 
-                                backgroundColor: '#e0f2fe', 
-                                color: THEME_COLORS.primary,
-                                display: 'flex'
-                            }}
-                        >
-                            <Globe size={26} />
-                        </Box>
-                        <Box>
-                            <Typography variant="h5" sx={{ fontWeight: 800, color: THEME_COLORS.textPrimary, letterSpacing: '-0.5px' }}>
-                                Gestión Global — Modalidades
-                            </Typography>
-                            <Typography variant="body2" sx={{ color: THEME_COLORS.textSecondary, fontWeight: 500 }}>
-                                Configura las modalidades de estudio (Presencial, Semipresencial, Virtual, etc.).
-                            </Typography>
-                        </Box>
-                    </Box>
+            {/* Feedback Alert */}
+            {feedback && (
+                <div className={`alert alert-${feedback.type === 'error' ? 'danger' : 'success'} border-0 shadow-sm rounded-3 py-3 d-flex align-items-center mb-4`} role="alert">
+                    <span className="fw-semibold">{feedback.message}</span>
+                </div>
+            )}
 
-                    <Button
-                        variant="contained"
-                        startIcon={<Plus size={18} />}
-                        onClick={abrirCrearModalidad}
-                        sx={{
-                            backgroundColor: THEME_COLORS.primary,
-                            borderRadius: 2.5,
-                            px: 3,
-                            py: 1.2,
-                            fontWeight: 700,
-                            textTransform: 'none',
-                            boxShadow: '0 4px 14px rgba(2, 132, 199, 0.3)',
-                            '&:hover': { backgroundColor: THEME_COLORS.primaryHover }
-                        }}
-                    >
-                        Nueva Modalidad
-                    </Button>
-                </Box>
-
-                {feedback && (
-                    <Alert severity={feedback.type} onClose={() => setFeedback(null)} sx={{ mb: 3, borderRadius: 2, boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
-                        {feedback.message}
-                    </Alert>
-                )}
-
-                {/* --- BARRA DE BÚSQUEDA Y FILTROS --- */}
-                <Paper
-                    elevation={0}
-                    sx={{
-                        p: 2.5,
-                        mb: 3,
-                        borderRadius: 3,
-                        backgroundColor: '#ffffff',
-                        boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
-                        border: '1px solid #f1f5f9',
-                        display: 'flex',
-                        flexDirection: { xs: 'column', md: 'row' },
-                        justifyContent: 'space-between',
-                        alignItems: { xs: 'stretch', md: 'center' },
-                        gap: 2,
-                    }}
-                >
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, alignItems: 'center', flex: 1 }}>
-                        <TextField
-                            placeholder="Buscar por código, nombre o descripción..."
-                            size="small"
-                            value={busqueda}
-                            onChange={(e) => {
-                                setBusqueda(e.target.value);
-                                setPagina(0);
-                            }}
-                            onKeyDown={(e) => e.key === 'Enter' && cargarDatos()}
-                            sx={{ 
-                                width: { xs: '100%', sm: 400 },
-                                '& .MuiOutlinedInput-root': { borderRadius: 2.5, backgroundColor: '#f8fafc' }
-                            }}
-                            InputProps={{
-                                startAdornment: (
-                                    <InputAdornment position="start">
-                                        <Search size={18} color="#94a3b8" />
-                                    </InputAdornment>
-                                ),
-                            }}
-                        />
-
-                        <FormControlLabel
-                            control={
-                                <Checkbox
-                                    size="small"
-                                    checked={soloActivos}
-                                    onChange={(e) => {
-                                        setSoloActivos(e.target.checked);
-                                        setPagina(0);
-                                    }}
-                                    sx={{ color: THEME_COLORS.primary, '&.Mui-checked': { color: THEME_COLORS.primary } }}
+            {/* Panel de Filtros */}
+            <div className="premium-card p-4 mb-4">
+                <div className="row g-3 align-items-end">
+                    <div className="col-12 col-md-8">
+                        <div className="premium-input-group h-100 d-flex flex-column justify-content-end">
+                            <label className="filter-label"><Search size={14} /> Buscar Modalidad</label>
+                            <div className="position-relative">
+                                <input 
+                                    type="text" 
+                                    className="form-control" 
+                                    style={{ paddingLeft: '2.5rem' }}
+                                    placeholder="Buscar por código, nombre o descripción..."
+                                    value={busqueda}
+                                    onChange={(e) => setBusqueda(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && setBusquedaAplicada(busqueda)}
                                 />
-                            }
-                            label={
-                                <Typography variant="body2" sx={{ color: THEME_COLORS.textPrimary, fontWeight: 600 }}>
-                                    Solo modalidades activas
-                                </Typography>
-                            }
-                        />
-                    </Box>
+                                <Search size={16} className="position-absolute text-muted" style={{ left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+                            </div>
+                        </div>
+                    </div>
 
-                    <Box sx={{ display: 'flex', gap: 1.5 }}>
-                        <Button
-                            variant="outlined"
-                            startIcon={<Search size={16} />}
-                            onClick={() => { setPagina(0); cargarDatos(); }}
-                            sx={{ textTransform: 'none', borderRadius: 2, fontWeight: 600, px: 2 }}
-                        >
-                            Buscar
-                        </Button>
-                        <Button
-                            variant="text"
-                            startIcon={<RefreshCw size={16} />}
+                    <div className="col-12 col-md-4 d-flex gap-2">
+                        <button type="button" className="btn btn-light border text-muted fw-medium d-flex align-items-center justify-content-center gap-2 w-100" 
                             onClick={() => {
                                 setBusqueda('');
-                                setSoloActivos(false);
+                                setBusquedaAplicada('');
                                 setPagina(0);
-                                cargarDatos();
                             }}
-                            sx={{ textTransform: 'none', borderRadius: 2, fontWeight: 600, color: '#64748b' }}
                         >
-                            Limpiar
-                        </Button>
-                    </Box>
-                </Paper>
-
-                {/* --- TABLA PRINCIPAL --- */}
-                <TableContainer 
-                    component={Paper} 
-                    elevation={0} 
-                    sx={{ 
-                        borderRadius: 3, 
-                        border: '1px solid #f1f5f9',
-                        boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
-                        overflow: 'hidden'
-                    }}
-                >
-                    <Table sx={{ minWidth: 800 }}>
-                        <TableHead sx={{ backgroundColor: '#f8fafc' }}>
-                            <TableRow>
-                                <TableCell sx={{ fontWeight: 700, color: '#64748b', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2, width: '15%' }}>Código</TableCell>
-                                <TableCell sx={{ fontWeight: 700, color: '#64748b', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', width: '30%' }}>Modalidad</TableCell>
-                                <TableCell sx={{ fontWeight: 700, color: '#64748b', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', width: '35%' }}>Descripción</TableCell>
-                                <TableCell sx={{ fontWeight: 700, color: '#64748b', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', width: '10%' }}>Estado</TableCell>
-                                <TableCell align="right" sx={{ fontWeight: 700, color: '#64748b', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', width: '10%' }}>Acciones</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {cargando ? (
-                                <TableRow>
-                                    <TableCell colSpan={5} align="center" sx={{ py: 8 }}>
-                                        <CircularProgress size={32} thickness={5} sx={{ color: THEME_COLORS.primary }} />
-                                    </TableCell>
-                                </TableRow>
-                            ) : modalidadesPaginadas.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={5} align="center" sx={{ py: 8, color: '#94a3b8' }}>
-                                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-                                            <Box sx={{ p: 2, borderRadius: '50%', backgroundColor: '#f1f5f9', display: 'inline-flex' }}>
-                                                <Globe size={32} color="#cbd5e1" />
-                                            </Box>
-                                            <Typography variant="body1" sx={{ fontWeight: 600, color: '#475569', mt: 1 }}>No se encontraron modalidades</Typography>
-                                            <Typography variant="body2">Ajusta tu búsqueda o registra una nueva modalidad.</Typography>
-                                        </Box>
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                modalidadesPaginadas.map((modalidad) => (
-                                    <TableRow hover key={modalidad.id || modalidad.codigo} sx={{ '& td': { borderColor: '#f1f5f9' }, transition: 'backgroundColor 0.2s' }}>
-                                        <TableCell>
-                                            <Typography variant="body2" sx={{ fontWeight: 800, color: THEME_COLORS.primary }}>
-                                                {modalidad.codigo}
-                                            </Typography>
-                                        </TableCell>
-
-                                        <TableCell>
-                                            <Typography variant="body2" sx={{ fontWeight: 700, color: '#334155' }}>
-                                                {modalidad.nombre}
-                                            </Typography>
-                                        </TableCell>
-
-                                        <TableCell>
-                                            <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.85rem' }}>
-                                                {modalidad.descripcion || '—'}
-                                            </Typography>
-                                        </TableCell>
-
-                                        <TableCell>
-                                            <Chip
-                                                label={modalidad.estado}
-                                                size="small"
-                                                sx={{
-                                                    fontWeight: 800,
-                                                    fontSize: '0.7rem',
-                                                    letterSpacing: '0.5px',
-                                                    borderRadius: '8px',
-                                                    px: 1,
-                                                    backgroundColor: String(modalidad.estado).toUpperCase() === 'ACTIVO' ? '#dcfce7' : '#fee2e2',
-                                                    color: String(modalidad.estado).toUpperCase() === 'ACTIVO' ? '#166534' : '#991b1b',
-                                                }}
-                                            />
-                                        </TableCell>
-
-                                        <TableCell align="right">
-                                            <Stack direction="row" spacing={1} justifyContent="flex-end">
-                                                <Tooltip title="Editar Modalidad">
-                                                    <IconButton
-                                                        size="small"
-                                                        onClick={() => abrirEditarModalidad(modalidad)}
-                                                        sx={{ color: '#0284c7', backgroundColor: '#f0f9ff', '&:hover': { backgroundColor: '#e0f2fe' } }}
-                                                    >
-                                                        <Edit2 size={16} />
-                                                    </IconButton>
-                                                </Tooltip>
-                                                <Tooltip title="Eliminar Modalidad">
-                                                    <IconButton
-                                                        size="small"
-                                                        onClick={() => setModalidadAEliminar(modalidad)}
-                                                        sx={{ color: '#ef4444', backgroundColor: '#fef2f2', '&:hover': { backgroundColor: '#fee2e2' } }}
-                                                    >
-                                                        <Trash2 size={16} />
-                                                    </IconButton>
-                                                </Tooltip>
-                                            </Stack>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                    
-                    <Box sx={{ borderTop: '1px solid #f1f5f9', backgroundColor: '#fcfcfc' }}>
-                        <TablePagination
-                            component="div"
-                            count={modalidades.length}
-                            page={pagina}
-                            onPageChange={(e, newPage) => setPagina(newPage)}
-                            rowsPerPage={filasPorPagina}
-                            onRowsPerPageChange={(e) => {
-                                setFilasPorPagina(parseInt(e.target.value, 10));
+                            <RefreshCcw size={16} /> Limpiar
+                        </button>
+                        <button type="button" className="btn btn-premium-accent d-flex align-items-center justify-content-center gap-2 w-100"
+                            onClick={() => {
+                                setBusquedaAplicada(busqueda);
                                 setPagina(0);
                             }}
-                            labelRowsPerPage="Modalidades por página:"
-                        />
-                    </Box>
-                </TableContainer>
+                        >
+                            <Filter size={16} /> Filtrar
+                        </button>
+                    </div>
+                </div>
+            </div>
 
-                {/* --- MODAL DE REGISTRO / EDICIÓN --- */}
-                <Dialog
-                    open={modalAbierto}
-                    onClose={cerrarModal}
-                    fullWidth
-                    maxWidth="sm"
-                    PaperProps={{ sx: { borderRadius: 4, boxShadow: '0 24px 48px rgba(0,0,0,0.1)' } }}
-                >
-                    <Box component="form" onSubmit={guardarModalidad}>
-                        <DialogTitle sx={{ p: 3, pb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <Stack direction="row" spacing={2} alignItems="center">
-                                <Box sx={{ backgroundColor: '#f0f9ff', color: THEME_COLORS.primary, p: 1.5, borderRadius: 3, display: 'flex' }}>
-                                    <Globe size={24} />
-                                </Box>
-                                <Box>
-                                    <Typography variant="h6" sx={{ fontWeight: 800, color: '#1e293b', lineHeight: 1.2 }}>
-                                        {modoEdicion ? 'Editar Modalidad' : 'Nueva Modalidad'}
-                                    </Typography>
-                                    <Typography variant="body2" sx={{ color: '#64748b', mt: 0.5 }}>
-                                        {modoEdicion ? 'Modifique los datos de la modalidad de estudio.' : 'Complete la información para registrar la nueva modalidad.'}
-                                    </Typography>
-                                </Box>
-                            </Stack>
-                            <IconButton onClick={cerrarModal} size="small" sx={{ backgroundColor: '#f1f5f9', '&:hover':{backgroundColor:'#e2e8f0'} }}>
-                                <X size={20} color="#64748b" />
-                            </IconButton>
-                        </DialogTitle>
+            {/* Tabla Principal */}
+            <div className="premium-card overflow-hidden">
+                {cargando ? (
+                    <div className="text-center py-5">
+                        <div className="spinner-border text-teal-600" role="status" style={{ color: 'var(--teal-600)' }}></div>
+                    </div>
+                ) : modalidadesPaginadas.length === 0 ? (
+                    <div className="text-center py-5" style={{ minHeight: '300px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+                        <div className="bg-light rounded-circle d-flex align-items-center justify-content-center mb-3" style={{ width: '80px', height: '80px' }}>
+                            <Globe size={36} className="text-muted opacity-50" />
+                        </div>
+                        <h5 className="fw-bold" style={{ color: 'var(--slate-800)' }}>No se encontraron modalidades</h5>
+                        <p className="text-muted mb-0" style={{ maxWidth: '400px' }}>
+                            Ajuste los criterios de búsqueda o cree una nueva modalidad presionando "Nueva Modalidad".
+                        </p>
+                    </div>
+                ) : (
+                    <>
+                        <div className="table-responsive">
+                            <table className="table premium-table">
+                                <thead>
+                                    <tr>
+                                        <th className="ps-4" style={{ width: '15%' }}>Código</th>
+                                        <th style={{ width: '30%' }}>Modalidad</th>
+                                        <th style={{ width: '30%' }}>Descripción</th>
+                                        <th className="text-center" style={{ width: '10%' }}>Estado</th>
+                                        <th className="text-end pe-4" style={{ width: '15%' }}>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {modalidadesPaginadas.map((row) => (
+                                        <tr key={row.id || row.codigo}>
+                                            <td className="ps-4">
+                                                <div className="fw-bold text-primary" style={{ fontSize: '0.95rem' }}>
+                                                    {row.codigo}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div className="fw-semibold text-dark" style={{ fontSize: '0.9rem' }}>
+                                                    {row.nombre}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div className="text-muted" style={{ fontSize: '0.85rem' }}>
+                                                    {row.descripcion || '—'}
+                                                </div>
+                                            </td>
+                                            <td className="text-center">
+                                                <span className={`badge px-2 py-1 rounded-pill ${row.estado === 'ACTIVO' ? 'badge-soft-success' : 'badge-soft-danger'}`} style={{ fontSize: '0.75rem', letterSpacing: '0.5px' }}>
+                                                    {row.estado}
+                                                </span>
+                                            </td>
+                                            <td className="text-end pe-4">
+                                                <div className="d-flex justify-content-end gap-2 align-items-center">
+                                                    <button 
+                                                        className={`btn btn-sm d-flex align-items-center gap-1 ${row.estado === 'ACTIVO' ? 'btn-outline-danger' : 'btn-outline-success'}`}
+                                                        onClick={() => setModalidadACambiarEstado(row)}
+                                                        style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem', fontWeight: '600' }}
+                                                    >
+                                                        {row.estado === 'ACTIVO' ? <><XCircle size={14}/> Desactivar</> : <><CheckCircle2 size={14}/> Activar</>}
+                                                    </button>
+                                                    <button 
+                                                        className="btn btn-sm btn-light border shadow-sm text-warning"
+                                                        onClick={() => abrirModalEditar(row)}
+                                                        title="Editar"
+                                                        style={{ borderRadius: '6px' }}
+                                                    >
+                                                        <Pencil size={15} />
+                                                    </button>
+                                                    <button 
+                                                        className="btn btn-sm btn-light border shadow-sm text-danger"
+                                                        onClick={() => setModalidadAEliminar(row)}
+                                                        title="Eliminar"
+                                                        style={{ borderRadius: '6px' }}
+                                                    >
+                                                        <Trash2 size={15} />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
 
-                        <DialogContent sx={{ px: 3, pb: 4, pt: '10px !important' }}>
-                            <Grid container spacing={2.5}>
-                                <Grid item xs={12} sm={6}>
-                                    <Typography variant="body2" sx={{ fontWeight: 700, mb: 1, color: '#475569' }}>
-                                        Código <span style={{color: '#ef4444'}}>*</span>
-                                    </Typography>
-                                    <TextField
-                                        fullWidth
-                                        required
-                                        placeholder="Ej. PRES, SEMI, VIR"
-                                        size="medium"
-                                        value={formulario.codigo}
-                                        onChange={(e) => actualizarCampo('codigo', e.target.value.toUpperCase())}
-                                        sx={inputStyle}
-                                        InputProps={{
-                                            startAdornment: (
-                                                <InputAdornment position="start">
-                                                    <Hash size={18} color="#94a3b8" />
-                                                </InputAdornment>
-                                            ),
+                        {/* Footer Paginación */}
+                        {modalidadesFiltradas.length > 0 && (
+                            <div className="d-flex flex-column flex-sm-row justify-content-between align-items-center p-3 border-top bg-light bg-opacity-50 gap-3">
+                                <div className="d-flex align-items-center gap-2">
+                                    <span className="text-muted small fw-medium">Modalidades por página:</span>
+                                    <select 
+                                        className="form-select form-select-sm border-0 bg-transparent fw-bold" 
+                                        style={{ width: '70px', cursor: 'pointer' }}
+                                        value={filasPorPagina} 
+                                        onChange={(e) => {
+                                            setFilasPorPagina(parseInt(e.target.value, 10));
+                                            setPagina(0);
                                         }}
-                                    />
-                                </Grid>
-
-                                <Grid item xs={12} sm={6}>
-                                    <Typography variant="body2" sx={{ fontWeight: 700, mb: 1, color: '#475569' }}>
-                                        Estado Operativo <span style={{color: '#ef4444'}}>*</span>
-                                    </Typography>
-                                    <TextField
-                                        select
-                                        fullWidth
-                                        required
-                                        size="medium"
-                                        value={formulario.estado}
-                                        onChange={(e) => actualizarCampo('estado', e.target.value)}
-                                        sx={inputStyle}
                                     >
-                                        <MenuItem value="ACTIVO">
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                                                <Box sx={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#22c55e' }} />
-                                                <Typography variant="body2" sx={{ fontWeight: 600 }}>ACTIVO</Typography>
-                                            </Box>
-                                        </MenuItem>
-                                        <MenuItem value="INACTIVO">
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                                                <Box sx={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#ef4444' }} />
-                                                <Typography variant="body2" sx={{ fontWeight: 600 }}>INACTIVO</Typography>
-                                            </Box>
-                                        </MenuItem>
-                                    </TextField>
-                                </Grid>
+                                        <option value={5}>5</option>
+                                        <option value={10}>10</option>
+                                        <option value={20}>20</option>
+                                        <option value={50}>50</option>
+                                    </select>
+                                </div>
+                                <span className="text-muted small fw-medium">
+                                    Mostrando {pagina * filasPorPagina + 1} a {Math.min((pagina + 1) * filasPorPagina, modalidadesFiltradas.length)} de {modalidadesFiltradas.length} registros
+                                </span>
+                                <div className="d-flex gap-1">
+                                    <button 
+                                        className="btn btn-sm btn-white border shadow-sm" 
+                                        onClick={() => setPagina(p => Math.max(0, p - 1))}
+                                        disabled={pagina === 0}
+                                    >
+                                        <ChevronLeft size={16} />
+                                    </button>
+                                    <button 
+                                        className="btn btn-sm btn-white border shadow-sm" 
+                                        onClick={() => setPagina(p => Math.min(totalPaginas - 1, p + 1))}
+                                        disabled={pagina >= totalPaginas - 1}
+                                    >
+                                        <ChevronRight size={16} />
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </>
+                )}
+            </div>
 
-                                <Grid item xs={12}>
-                                    <Typography variant="body2" sx={{ fontWeight: 700, mb: 1, color: '#475569' }}>
-                                        Nombre de la Modalidad <span style={{color: '#ef4444'}}>*</span>
-                                    </Typography>
-                                    <TextField
-                                        fullWidth
-                                        required
-                                        placeholder="Ej. PRESENCIAL, SEMIPRESENCIAL, VIRTUAL"
-                                        size="medium"
-                                        value={formulario.nombre}
-                                        onChange={(e) => actualizarCampo('nombre', e.target.value)}
-                                        sx={inputStyle}
-                                        InputProps={{
-                                            startAdornment: (
-                                                <InputAdornment position="start">
-                                                    <AlignLeft size={18} color="#94a3b8" />
-                                                </InputAdornment>
-                                            ),
-                                        }}
-                                    />
-                                </Grid>
+            {/* MODAL CREAR / EDITAR MODALIDAD */}
+            {modalFormularioAbierto && (
+                <>
+                    <div className="modal fade show d-block" tabIndex="-1" style={{ zIndex: 1055 }}>
+                        <div className="modal-dialog modal-dialog-centered">
+                            <div className="modal-content premium-modal">
+                                
+                                <div className="modal-header d-flex justify-content-between align-items-center">
+                                    <div className="d-flex align-items-center gap-3">
+                                        <div className="bg-white bg-opacity-10 p-2 rounded-3">
+                                            <Globe size={24} className="text-white" />
+                                        </div>
+                                        <div>
+                                            <h5 className="modal-title fw-bold mb-0 text-white">
+                                                {formulario.id ? 'Editar Modalidad' : 'Nueva Modalidad'}
+                                            </h5>
+                                            <small className="text-white-50">Datos identificativos de la modalidad</small>
+                                        </div>
+                                    </div>
+                                    <button type="button" className="btn-close btn-close-white" onClick={cerrarModalFormulario}></button>
+                                </div>
 
-                                <Grid item xs={12}>
-                                    <Typography variant="body2" sx={{ fontWeight: 700, mb: 1, color: '#475569' }}>
-                                        Descripción <span style={{color: '#94a3b8', fontWeight: 500}}>(Opcional)</span>
-                                    </Typography>
-                                    <TextField
-                                        fullWidth
-                                        multiline
-                                        rows={3}
-                                        placeholder="Detalles sobre el régimen de asistencia, requerimientos técnicos, etc."
-                                        size="medium"
-                                        value={formulario.descripcion}
-                                        onChange={(e) => actualizarCampo('descripcion', e.target.value)}
-                                        sx={inputStyle}
-                                    />
-                                </Grid>
-                            </Grid>
-                        </DialogContent>
+                                <div className="modal-body p-4">
+                                    <form id="form-modalidad" onSubmit={guardarModalidad}>
+                                        <div className="row g-3">
+                                            <div className="col-md-6">
+                                                <div className="premium-input-group">
+                                                    <label className="filter-label">Código de Modalidad <span className="text-danger ms-1">*</span></label>
+                                                    <input 
+                                                        type="text" 
+                                                        className="form-control text-uppercase" 
+                                                        name="codigo"
+                                                        placeholder="Ej. PRES" 
+                                                        value={formulario.codigo} 
+                                                        onChange={(e) => actualizarCampo({ target: { name: 'codigo', value: e.target.value.toUpperCase() } })}
+                                                        disabled={Boolean(formulario.id)}
+                                                        required 
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="col-md-6">
+                                                <div className="premium-input-group">
+                                                    <label className="filter-label">Estado Operativo <span className="text-danger ms-1">*</span></label>
+                                                    <select className="form-select" name="estado" value={formulario.estado} onChange={actualizarCampo} required>
+                                                        <option value="ACTIVO">ACTIVO</option>
+                                                        <option value="INACTIVO">INACTIVO</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div className="col-12">
+                                                <div className="premium-input-group">
+                                                    <label className="filter-label">Nombre de la Modalidad <span className="text-danger ms-1">*</span></label>
+                                                    <input 
+                                                        type="text" 
+                                                        className="form-control" 
+                                                        name="nombre"
+                                                        placeholder="Ej. Presencial" 
+                                                        value={formulario.nombre} 
+                                                        onChange={actualizarCampo} 
+                                                        required 
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="col-12">
+                                                <div className="premium-input-group">
+                                                    <label className="filter-label">Descripción</label>
+                                                    <textarea 
+                                                        className="form-control" 
+                                                        name="descripcion"
+                                                        rows="3"
+                                                        placeholder="Descripción opcional..." 
+                                                        value={formulario.descripcion} 
+                                                        onChange={actualizarCampo} 
+                                                    ></textarea>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
 
-                        <DialogActions sx={{ p: 3, pt: 0, gap: 1.5, borderTop: '1px solid #f1f5f9', mt: 1 }}>
-                            <Button
-                                type="button"
-                                onClick={cerrarModal}
-                                disabled={guardando}
-                                sx={{ color: '#64748b', fontWeight: 700, textTransform: 'none', px: 3, '&:hover':{backgroundColor: '#f1f5f9'} }}
-                            >
-                                Cancelar
-                            </Button>
-                            <Button
-                                type="submit"
-                                variant="contained"
-                                disabled={guardando}
-                                sx={{
-                                    backgroundColor: THEME_COLORS.primary,
-                                    borderRadius: 2.5,
-                                    px: 4,
-                                    py: 1,
-                                    textTransform: 'none',
-                                    fontWeight: 700,
-                                    boxShadow: '0 4px 14px rgba(2, 132, 199, 0.3)',
-                                    '&:hover': { backgroundColor: THEME_COLORS.primaryHover },
-                                }}
-                            >
-                                {guardando ? 'Guardando...' : modoEdicion ? 'Actualizar Modalidad' : 'Guardar Modalidad'}
-                            </Button>
-                        </DialogActions>
-                    </Box>
-                </Dialog>
+                                <div className="modal-footer d-flex justify-content-end gap-2">
+                                    <button type="button" className="btn btn-light fw-medium px-4" onClick={cerrarModalFormulario} disabled={guardando}>
+                                        Cancelar
+                                    </button>
+                                    <button type="submit" form="form-modalidad" className="btn btn-premium-accent fw-medium px-4" disabled={guardando}>
+                                        {guardando ? 'Guardando...' : 'Guardar Modalidad'}
+                                    </button>
+                                </div>
 
-                {/* --- MODAL DE CONFIRMACIÓN DE ELIMINACIÓN --- */}
-                <Dialog
-                    open={Boolean(modalidadAEliminar)}
-                    onClose={() => !eliminando && setModalidadAEliminar(null)}
-                    maxWidth="xs"
-                    fullWidth
-                    PaperProps={{ sx: { borderRadius: 4, boxShadow: '0 20px 40px rgba(0,0,0,0.1)' } }}
-                >
-                    <DialogTitle sx={{ p: 3, pb: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5 }}>
-                        <Box sx={{ backgroundColor: '#fef2f2', color: '#ef4444', p: 2, borderRadius: '50%', display: 'flex' }}>
-                            <AlertTriangle size={32} />
-                        </Box>
-                        <Typography variant="h6" sx={{ fontWeight: 800, textAlign: 'center', color: '#1e293b' }}>
-                            ¿Eliminar Modalidad?
-                        </Typography>
-                    </DialogTitle>
-                    <DialogContent sx={{ px: 4, pb: 3 }}>
-                        <Typography variant="body1" sx={{ color: '#475569', textAlign: 'center', lineHeight: 1.5 }}>
-                            Se eliminará la modalidad <strong style={{color: '#000'}}>{modalidadAEliminar?.nombre}</strong> ({modalidadAEliminar?.codigo}). Esta acción no se puede deshacer.
-                        </Typography>
-                    </DialogContent>
-                    <DialogActions sx={{ p: 3, pt: 0, justifyContent: 'center', gap: 2 }}>
-                        <Button
-                            type="button"
-                            onClick={() => setModalidadAEliminar(null)}
-                            disabled={eliminando}
-                            sx={{ color: '#64748b', fontWeight: 700, textTransform: 'none', px: 3, '&:hover':{backgroundColor: '#f1f5f9'} }}
-                        >
-                            Cancelar
-                        </Button>
-                        <Button
-                            type="button"
-                            onClick={confirmarEliminacion}
-                            variant="contained"
-                            disabled={eliminando}
-                            sx={{
-                                backgroundColor: '#ef4444',
-                                '&:hover': { backgroundColor: '#dc2626' },
-                                borderRadius: 2.5,
-                                textTransform: 'none',
-                                fontWeight: 700,
-                                px: 4,
-                                py: 1,
-                                boxShadow: '0 4px 14px rgba(239, 68, 68, 0.3)',
-                            }}
-                        >
-                            {eliminando ? 'Eliminando...' : 'Sí, Eliminar'}
-                        </Button>
-                    </DialogActions>
-                </Dialog>
-            </Container>
-        </Fade>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="modal-backdrop fade show" style={{ backgroundColor: '#0f172a', opacity: 0.6 }}></div>
+                </>
+            )}
+
+            {/* MODAL CONFIRMACIÓN CAMBIO DE ESTADO */}
+            {modalidadACambiarEstado && (
+                <>
+                    <div className="modal fade show d-block" tabIndex="-1" style={{ zIndex: 1055 }}>
+                        <div className="modal-dialog modal-dialog-centered modal-sm">
+                            <div className="modal-content premium-modal modal-warning">
+                                <div className="modal-body p-4 text-center">
+                                    <div className="bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style={{ width: '64px', height: '64px' }}>
+                                        <AlertTriangle size={32} className="text-warning" />
+                                    </div>
+                                    <h5 className="fw-bold text-dark mb-2">¿Cambiar Estado?</h5>
+                                    <p className="text-muted small mb-0">
+                                        La modalidad <strong>{modalidadACambiarEstado.nombre}</strong> pasará a estar{' '}
+                                        <strong>{modalidadACambiarEstado.estado === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO'}</strong>.
+                                    </p>
+                                </div>
+                                <div className="modal-footer bg-light border-top d-flex flex-nowrap p-0">
+                                    <button type="button" className="btn btn-link text-muted fw-semibold text-decoration-none w-50 py-3 border-end m-0 rounded-0" onClick={() => setModalidadACambiarEstado(null)} disabled={guardando}>
+                                        Cancelar
+                                    </button>
+                                    <button type="button" className="btn btn-link text-primary fw-bold text-decoration-none w-50 py-3 m-0 rounded-0" onClick={cambiarEstadoModalidad} disabled={guardando}>
+                                        {guardando ? 'Procesando...' : 'Confirmar'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="modal-backdrop fade show" style={{ backgroundColor: '#0f172a', opacity: 0.6 }}></div>
+                </>
+            )}
+
+            {/* MODAL CONFIRMACIÓN ELIMINACIÓN */}
+            {modalidadAEliminar && (
+                <>
+                    <div className="modal fade show d-block" tabIndex="-1" style={{ zIndex: 1055 }}>
+                        <div className="modal-dialog modal-dialog-centered modal-sm">
+                            <div className="modal-content premium-modal modal-danger">
+                                <div className="modal-body p-4 text-center">
+                                    <div className="bg-danger bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style={{ width: '64px', height: '64px' }}>
+                                        <Trash2 size={32} className="text-danger" />
+                                    </div>
+                                    <h5 className="fw-bold text-dark mb-2">¿Eliminar Modalidad?</h5>
+                                    <p className="text-muted small mb-0">
+                                        Se eliminará <strong className="text-dark">{modalidadAEliminar.nombre} ({modalidadAEliminar.codigo})</strong>. Esta acción no se puede deshacer.
+                                    </p>
+                                </div>
+                                <div className="modal-footer bg-light border-top d-flex flex-nowrap p-0">
+                                    <button type="button" className="btn btn-link text-muted fw-semibold text-decoration-none w-50 py-3 border-end m-0 rounded-0" onClick={() => setModalidadAEliminar(null)} disabled={eliminando}>
+                                        Cancelar
+                                    </button>
+                                    <button type="button" className="btn btn-link text-danger fw-bold text-decoration-none w-50 py-3 m-0 rounded-0" onClick={eliminarModalidad} disabled={eliminando}>
+                                        {eliminando ? 'Eliminando...' : 'Sí, Eliminar'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="modal-backdrop fade show" style={{ backgroundColor: '#0f172a', opacity: 0.6 }}></div>
+                </>
+            )}
+
+        </div>
     );
 }
