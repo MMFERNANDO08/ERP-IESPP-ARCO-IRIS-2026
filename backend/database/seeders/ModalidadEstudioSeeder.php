@@ -28,7 +28,7 @@ class ModalidadEstudioSeeder extends Seeder
             ],
             [
                 'codigo' => 'MOD-03',
-                'nombre' => 'VIRTUAL',
+                'nombre' => 'A DISTANCIA',
                 'descripcion' => 'Programa ofertado por el Instituto Arco Iris totalmente remota de manera virtual',
                 'estado' => 'ACTIVO',
                 'created_at' => now(),

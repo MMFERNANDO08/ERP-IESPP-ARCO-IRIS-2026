@@ -43,6 +43,21 @@ import {
     Tag,
     Building2,
     School,
+    // --- NUEVOS ICONOS AGREGADOS PARA MATRÍCULA ---
+    ClipboardList,
+    Download,
+    DollarSign,
+    Clock,
+    UsersRound,
+    ListChecks,
+    UploadCloud,
+    FileBadge,
+    CalendarClock,
+    UserPlus2,
+    Settings2,
+    FileStack,
+    UserMinus
+
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { THEME_COLORS } from '../theme/colors';
@@ -63,7 +78,8 @@ export default function DashboardLayout() {
     const [openMenus, setOpenMenus] = useState({
         users: location.pathname.startsWith('/users') || location.pathname.startsWith('/roles'),
         admission: location.pathname.startsWith('/admission'),
-        gestionGlobal: location.pathname.startsWith('/gestion-global'),
+        matricula: location.pathname.startsWith('/matricula'),
+        gestionGlobal: location.pathname.startsWith('/gestion-global'),        
     });
 
     useEffect(() => {
@@ -72,6 +88,9 @@ export default function DashboardLayout() {
         }
         if (location.pathname.startsWith('/admission')) {
             setOpenMenus((prev) => ({ ...prev, admission: true }));
+        }
+        if (location.pathname.startsWith('/matricula')) {
+            setOpenMenus((prev) => ({ ...prev, matricula: true }));
         }
         if (location.pathname.startsWith('/gestion-global')) {
             setOpenMenus((prev) => ({ ...prev, gestionGlobal: true }));
@@ -101,6 +120,30 @@ export default function DashboardLayout() {
             path: '/',
             show: true,
         },
+        // SE AGREGA GESTION MATRICULA
+        {
+            type: 'group',
+            id: 'matricula',
+            text: 'Gestión Matrícula',
+            icon: <ClipboardList size={18} />,
+            show: hasRole('superadmin') || hasRole('admin'),
+            children: [
+                { text: 'Importar pagos', icon: <Download size={16} />, path: '/matricula/importar-pagos' },
+                { text: 'Costos', icon: <DollarSign size={16} />, path: '/matricula/costos' },
+                { text: 'Horarios', icon: <Clock size={16} />, path: '/matricula/horarios' },
+                { text: 'Turnos matrícula', icon: <UsersRound size={16} />, path: '/matricula/turnos' },
+                { text: 'Vacantes', icon: <ListChecks size={16} />, path: '/matricula/vacantes' },
+                { text: 'Carga Masiva', icon: <UploadCloud size={16} />, path: '/matricula/carga-masiva' },
+                { text: 'Licencia Matrícula', icon: <FileBadge size={16} />, path: '/matricula/licencia' },
+                { text: 'Reserva Matrícula', icon: <CalendarClock size={16} />, path: '/matricula/reserva' },
+                { text: 'Fechas matrícula', icon: <Calendar size={16} />, path: '/matricula/fechas' },
+                { text: 'Matrícula a alumno', icon: <UserPlus2 size={16} />, path: '/matricula/alumno' },
+                { text: 'Generar', icon: <Settings2 size={16} />, path: '/matricula/generar' },
+                { text: 'Matrícula en Bloque', icon: <FileStack size={16} />, path: '/matricula/bloque' },
+                { text: 'Retiro Curso', icon: <UserMinus size={16} />, path: '/matricula/retiro' },
+            ],
+        },
+
         {
             type: 'group',
             id: 'users',
@@ -285,6 +328,17 @@ export default function DashboardLayout() {
         if (path.startsWith('/gestion-global/planes-estudio')) return 'Gestión Global — Planes de Estudio';
         if (path.startsWith('/gestion-global/secciones')) return 'Gestión Global — Secciones y Periodos';
         if (path.startsWith('/gestion-global')) return 'Gestión Global Académica';
+
+        // --- AGREGAMOS MATRICULA
+        if (path.startsWith('/matricula')) {
+            // Esto genera el título automáticamente
+            const subRuta = path.split('/')[2];
+            if (subRuta) {
+                const formatted = subRuta.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                return `Gestión Matrícula — ${formatted}`;
+            }
+            return 'Gestión Matrícula';
+        }
 
         return 'ERP IESPP Arco Iris — Panel General';
     };

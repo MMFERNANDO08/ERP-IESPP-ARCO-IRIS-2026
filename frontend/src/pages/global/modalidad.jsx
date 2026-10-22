@@ -325,7 +325,7 @@ export default function Modalidades() {
                         
                         <DialogContent sx={{ p: 3 }}>
                             <Grid container spacing={2.5}>
-                                <Grid item xs={12} sm={6}>
+                                <Grid item xs={12} sm={6} sx={{ mt: 2, mb: 2 }}>
                                     <TextField
                                         fullWidth required label="Código" size="small"
                                         value={formulario.codigo}
@@ -334,7 +334,8 @@ export default function Modalidades() {
                                         sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                                     />
                                 </Grid>
-                                <Grid item xs={12} sm={6}>
+                            
+                                <Grid item xs={12} sm={6} sx={{ mt: 2, mb: 2 }}>
                                     <TextField
                                         select fullWidth required label="Modalidad" size="small"
                                         value={formulario.nombre}
@@ -346,6 +347,9 @@ export default function Modalidades() {
                                         <MenuItem value="VIRTUAL">VIRTUAL</MenuItem>
                                     </TextField>
                                 </Grid>
+                            </Grid>
+
+                            <Grid item xs={12} sm={6} sx={{ mt: 2, mb: 2 }}>
                                 <Grid item xs={12}>
                                     <TextField
                                         fullWidth label="Descripción" size="small" multiline rows={3}
@@ -354,6 +358,9 @@ export default function Modalidades() {
                                         sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                                     />
                                 </Grid>
+                            </Grid>
+
+                            <Grid item xs={12} sm={6} sx={{ mt: 2, mb: 2 }}>
                                 <Grid item xs={12} sm={6}>
                                     <TextField
                                         select fullWidth required label="Estado" size="small"
