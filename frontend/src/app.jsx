@@ -37,6 +37,7 @@ import CuadroMeritoPage from './pages/admission/CuadroMeritoPage';
 // Páginas de Gestión Global
 import GestionCarrera from './pages/global/especialidad';
 import GestionPlanesEstudio from './pages/global/planesEstudio';
+import GestionCursosPlan from './pages/global/GestionCursosPlan'; // <--- ¡NUEVO: IMPORTACIÓN DE CURSOS!
 import GestionModalidades from './pages/global/modalidad';
 import GestionNivelesEducativos from './pages/global/nivelesEducativos';
 import GestionFacultades from './pages/global/facultades';
@@ -156,6 +157,12 @@ ReactDOM.createRoot(document.getElementById('root')).render(
                                 <Route
                                     path="/gestion-global/planes-estudio"
                                     element={<GestionPlanesEstudio />}
+                                />
+
+                                {/* <--- ¡NUEVO: RUTA PARA LA MALLA CURRICULAR (CURSOS) ---> */}
+                                <Route
+                                    path="/planes-estudio/:id/cursos"
+                                    element={<GestionCursosPlan />}
                                 />
 
                                 <Route

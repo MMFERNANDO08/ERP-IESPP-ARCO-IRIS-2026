@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\TesoreriaPagoController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\MatriculaController;
+use App\Http\Controllers\Api\CursoController;
 
 // Alumnos Management
 Route::middleware('auth:sanctum')
@@ -206,4 +207,22 @@ Route::prefix('matricula')->group(function () {
     Route::get('/modalidades', [MatriculaController::class, 'getModalidades']);
     Route::get('/programas', [MatriculaController::class, 'getProgramas']);
     Route::get('/periodos', [MatriculaController::class, 'getPeriodos']);
+});
+
+// Rutas para Cursos (Malla Curricular) y sus Prerrequisitos
+Route::prefix('cursos')->group(function () {
+    // CRUD Básico
+    Route::get('/', [CursoController::class, 'index']);
+    Route::post('/', [CursoController::class, 'store']);
+    Route::get('/{id}', [CursoController::class, 'show']);
+    Route::put('/{id}', [CursoController::class, 'update']);
+    Route::delete('/{id}', [CursoController::class, 'destroy']);
+    
+    // Cambiar estado
+    Route::patch('/{id}/estado', [CursoController::class, 'cambiarEstado']);
+    
+    // Prerrequisitos
+    Route::get('/{id}/prerrequisitos', [CursoController::class, 'obtenerPrerrequisitos']);
+    Route::post('/{id}/prerrequisitos', [CursoController::class, 'agregarPrerrequisito']);
+    Route::delete('/{id}/prerrequisitos/{prerrequisito}', [CursoController::class, 'eliminarPrerrequisito']);
 });
