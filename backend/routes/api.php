@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\NivelEducativoController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\SeccionController;
 use App\Http\Controllers\Api\PlanEstudioController;
+use App\Http\Controllers\Api\PeriodoController;
 use App\Http\Controllers\Api\TesoreriaPagoController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
@@ -81,6 +82,17 @@ Route::middleware('auth:sanctum')
         Route::get('/{codigo}', [SeccionController::class, 'show']);
         Route::put('/{codigo}', [SeccionController::class, 'update']);
         Route::delete('/{codigo}', [SeccionController::class, 'destroy']);
+    });
+
+// Periodos Management (Gestión de Periodos Académicos)
+Route::middleware('auth:sanctum')
+    ->prefix('periodos')
+    ->group(function () {
+        Route::get('/', [PeriodoController::class, 'index']);
+        Route::post('/', [PeriodoController::class, 'store']);
+        Route::get('/{codigo}', [PeriodoController::class, 'show']);
+        Route::put('/{codigo}', [PeriodoController::class, 'update']);
+        Route::delete('/{codigo}', [PeriodoController::class, 'destroy']);
     });
 
 // Status & Health

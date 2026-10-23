@@ -3,149 +3,82 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\ProgramaEstudio;
+use App\Models\Especialidad;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class EspecialidadController extends Controller
 {
-    /**
-     * Convertir el estado de la base de datos
-     * al formato que utiliza el formulario.
-     */
-    private function formatoEspecialidad(ProgramaEstudio $programa): array
-    {
-        return [
-            'id' => $programa->id,
-            'codigo' => $programa->codigo,
-            'nombre' => $programa->nombre,
-            'estado' => $programa->is_active ? 'ACTIVO' : 'INACTIVO',
-        ];
-    }
-
-    /**
-     * Listar y filtrar especialidades.
-     */
     public function index(Request $request)
     {
-        $query = ProgramaEstudio::query();
+        $query = Especialidad::with('facultad');
 
-        if ($request->input('solo_activos') == 1) {
-            $query->where('is_active', true);
-        }
-
-        if ($request->filled('buscar')) {
-            $buscar = trim($request->input('buscar'));
-
-            $query->where(function ($q) use ($buscar) {
-                $q->where('codigo', 'ilike', "%{$buscar}%")
-                  ->orWhere('nombre', 'ilike', "%{$buscar}%");
+        if ($request->has('solo_activos') && $request->solo_activos == 1) {
+            $query->where(function($q) {
+                $q->where('is_active', 1)
+                  ->orWhere('estado', 'ACTIVO')
+                  ->orWhere('estado', '1');
             });
         }
 
-        $programas = $query->orderBy('codigo')
-            ->get()
-            ->map(fn ($programa) => $this->formatoEspecialidad($programa));
+        if ($request->has('facultad_id') && !empty($request->facultad_id)) {
+            $query->where('facultad_id', $request->facultad_id);
+        }
 
-        return response()->json($programas->values());
+        $especialidades = $query->get();
+
+        return response()->json($especialidades);
     }
 
-    /**
-     * Obtener un registro por código.
-     */
-    public function show(string $codigo)
-    {
-        $programa = ProgramaEstudio::where('codigo', $codigo)
-            ->firstOrFail();
-
-        return response()->json([
-            'data' => $this->formatoEspecialidad($programa),
-        ]);
-    }
-
-    /**
-     * Registrar una especialidad.
-     */
     public function store(Request $request)
     {
-        $datos = $request->validate([
-            'codigo' => [
-                'required',
-                'string',
-                'max:30',
-                'unique:programas_estudio,codigo',
-            ],
-            'nombre' => 'required|string|max:150',
-            'estado' => 'required|in:ACTIVO,INACTIVO',
+        $data = $request->validate([
+            'codigo' => 'required|string|unique:especialidades,codigo',
+            'nombre' => 'required|string',
+            'facultad_id' => 'required',
+            'estado' => 'nullable|string',
+            'is_active' => 'nullable',
         ]);
 
-        $datos['codigo'] = strtoupper(trim($datos['codigo']));
-        $datos['nombre'] = trim($datos['nombre']);
-
-        // Campos propios de ProgramaEstudio.
-        $datosPrograma = [
-            'codigo' => $datos['codigo'],
-            'nombre' => $datos['nombre'],
-            'nivel_academico' => 'Pregrado',
-            'duracion_semestres' => 10,
-            'is_active' => $datos['estado'] === 'ACTIVO',
-        ];
-
-        $programa = ProgramaEstudio::create($datosPrograma);
+        $especialidad = Especialidad::create($data);
 
         return response()->json([
-            'message' => 'Especialidad creada correctamente.',
-            'data' => $this->formatoEspecialidad($programa),
+            'message' => 'Especialidad registrada correctamente',
+            'data' => $especialidad
         ], 201);
     }
 
-    /**
-     * Actualizar una especialidad por código.
-     */
-    public function update(Request $request, string $codigo)
+    public function show($codigo)
     {
-        $programa = ProgramaEstudio::where('codigo', $codigo)
-            ->firstOrFail();
+        $especialidad = Especialidad::with('facultad')->where('codigo', $codigo)->firstOrFail();
+        return response()->json(['data' => $especialidad]);
+    }
 
-        $datos = $request->validate([
-            'codigo' => [
-                'sometimes',
-                'required',
-                'string',
-                'max:30',
-                Rule::unique('programas_estudio', 'codigo')
-                    ->ignore($programa->id),
-            ],
-            'nombre' => 'required|string|max:150',
-            'estado' => 'required|in:ACTIVO,INACTIVO',
+    public function update(Request $request, $codigo)
+    {
+        $especialidad = Especialidad::where('codigo', $codigo)->firstOrFail();
+
+        $data = $request->validate([
+            'nombre' => 'required|string',
+            'facultad_id' => 'required',
+            'estado' => 'nullable|string',
+            'is_active' => 'nullable',
         ]);
 
-        $programa->update([
-            'codigo' => strtoupper(trim(
-                $datos['codigo'] ?? $programa->codigo
-            )),
-            'nombre' => trim($datos['nombre']),
-            'is_active' => $datos['estado'] === 'ACTIVO',
-        ]);
+        $especialidad->update($data);
 
         return response()->json([
-            'message' => 'Especialidad actualizada correctamente.',
-            'data' => $this->formatoEspecialidad($programa),
+            'message' => 'Especialidad actualizada correctamente',
+            'data' => $especialidad
         ]);
     }
 
-    /**
-     * Eliminar por código mediante borrado lógico.
-     */
-    public function destroy(string $codigo)
+    public function destroy($codigo)
     {
-        $programa = ProgramaEstudio::where('codigo', $codigo)
-            ->firstOrFail();
-
-        $programa->delete();
+        $especialidad = Especialidad::where('codigo', $codigo)->firstOrFail();
+        $especialidad->delete();
 
         return response()->json([
-            'message' => 'Especialidad eliminada correctamente.',
+            'message' => 'Especialidad eliminada correctamente'
         ]);
     }
 }

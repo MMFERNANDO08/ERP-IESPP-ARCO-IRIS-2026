@@ -181,6 +181,7 @@ export default function DashboardLayout() {
                 { text: 'Niveles Educativos', icon: <School size={16} />, path: '/gestion-global/niveles-educativos' },
                 { text: 'Especialidades', icon: <Briefcase size={16} />, path: '/gestion-global/especialidad' },
                 { text: 'Planes de estudio', icon: <BookOpen size={16} />, path: '/gestion-global/planes-estudio' },
+                { text: 'Periodos', icon: <Calendar size={16} />, path: '/gestion-global/periodos' }, // <--- ¡BOTÓN DE PERIODOS AÑADIDO AQUÍ!
                 { text: 'Secciones', icon: <Tag size={16} />, path: '/gestion-global/secciones' },
             ],
         },
@@ -326,6 +327,7 @@ export default function DashboardLayout() {
         if (path.startsWith('/gestion-global/niveles-educativos')) return 'Gestión Global — Niveles Educativos';
         if (path.startsWith('/gestion-global/especialidad')) return 'Gestión Global — Especialidades Académicas';
         if (path.startsWith('/gestion-global/planes-estudio')) return 'Gestión Global — Planes de Estudio';
+        if (path.startsWith('/gestion-global/periodos')) return 'Gestión Global — Periodos Académicos'; // <--- TÍTULO DINÁMICO DE PERIODOS
         if (path.startsWith('/gestion-global/secciones')) return 'Gestión Global — Secciones y Periodos';
         if (path.startsWith('/gestion-global')) return 'Gestión Global Académica';
 

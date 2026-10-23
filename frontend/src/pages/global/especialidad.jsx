@@ -1,21 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-    Box, Container, Paper, Typography, Button, IconButton, Table, TableBody,
-    TableCell, TableContainer, TableHead, TablePagination, TableRow,
-    TextField, Tooltip, Alert, CircularProgress, Dialog, DialogTitle,
-    DialogContent, DialogActions, Grid, MenuItem, InputAdornment, Stack,
-    Chip, FormControlLabel, Checkbox
-} from '@mui/material';
-import {
-    Plus, Search, RefreshCw, Pencil, Trash2, X, GraduationCap, BookOpen, AlertTriangle
-} from 'lucide-react';
-
+import { Search, RefreshCcw, Filter, Plus, Trash2, Pencil, BookOpen, AlertTriangle, X, GraduationCap, ChevronLeft, ChevronRight, Building2 } from 'lucide-react';
 import { especialidadService } from '../../services/especialidadService';
-import { THEME_COLORS } from '../../theme/colors';
+import { facultadService } from '../../services/facultadService';
 
 const FORMULARIO_VACIO = {
     codigo: '',
     nombre: '',
+    facultad_id: '',
     estado: 'ACTIVO',
 };
 
@@ -25,52 +16,225 @@ function obtenerErrores(error) {
     return error.response?.data?.message || 'Ocurrió un error al comunicarse con el servidor.';
 }
 
+const premiumStyles = `
+    :root {
+        --slate-50: #f8fafc;
+        --slate-100: #f1f5f9;
+        --slate-200: #e2e8f0;
+        --slate-600: #475569;
+        --slate-800: #1e293b;
+        --slate-900: #0f172a; 
+        --sky-500: #0ea5e9; 
+        --sky-600: #0284c7;
+        --danger-500: #ef4444;
+        --danger-600: #dc2626;
+        --radius-lg: 12px;
+        --radius-xl: 16px;
+    }
+
+    body {
+        background-color: var(--slate-50);
+    }
+
+    .premium-card {
+        background: #ffffff;
+        border-radius: var(--radius-lg);
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+        transition: box-shadow 0.3s ease;
+    }
+
+    .btn-premium-dark {
+        background-color: var(--slate-900);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        letter-spacing: 0.3px;
+        transition: all 0.2s;
+    }
+    .btn-premium-dark:hover {
+        background-color: var(--slate-800);
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+    }
+
+    .btn-premium-accent {
+        background-color: var(--sky-500);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    .btn-premium-accent:hover {
+        background-color: var(--sky-600);
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(14, 165, 233, 0.25);
+    }
+
+    .premium-input-group {
+        position: relative;
+    }
+    .premium-input-group .form-control, .premium-input-group .form-select {
+        border-radius: 8px;
+        border: 1px solid var(--slate-200);
+        padding: 0.65rem 1rem;
+        font-size: 0.9rem;
+        color: var(--slate-800);
+        background-color: var(--slate-50);
+        transition: all 0.2s;
+    }
+    .premium-input-group .form-control:focus, .premium-input-group .form-select:focus {
+        background-color: #fff;
+        border-color: var(--sky-500);
+        box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1);
+    }
+    .filter-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--slate-600);
+        margin-bottom: 0.4rem;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .premium-table {
+        margin-bottom: 0;
+    }
+    .premium-table th {
+        background-color: #ffffff;
+        color: var(--slate-600);
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 1.25rem 1rem;
+        border-bottom: 2px solid var(--slate-100);
+    }
+    .premium-table td {
+        padding: 1.25rem 1rem;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--slate-100);
+        font-size: 0.9rem;
+        color: var(--slate-800);
+    }
+    .premium-table tbody tr:hover td {
+        background-color: var(--slate-50);
+    }
+
+    .badge-soft-success {
+        background-color: #dcfce7;
+        color: #166534;
+        border: 1px solid #bbf7d0;
+    }
+    .badge-soft-danger {
+        background-color: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fecaca;
+    }
+
+    .modal-content.premium-modal {
+        border: none;
+        border-radius: var(--radius-xl);
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+    .premium-modal .modal-header {
+        background: linear-gradient(to right, var(--slate-900), #1e293b);
+        color: white;
+        border-bottom: none;
+        padding: 1.5rem;
+        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    }
+    .premium-modal.modal-danger .modal-header {
+        background: white;
+        color: var(--slate-900);
+        border-bottom: 1px solid var(--slate-200);
+    }
+    .premium-modal .modal-footer {
+        background-color: var(--slate-50);
+        border-top: 1px solid var(--slate-200);
+        padding: 1.25rem 1.5rem;
+        border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+    }
+`;
+
 export default function Especialidades() {
     const [especialidades, setEspecialidades] = useState([]);
+    const [listaFacultades, setListaFacultades] = useState([]);
     
     // Estados de búsqueda, filtro y paginación
     const [busqueda, setBusqueda] = useState('');
-    const [soloActivos, setSoloActivos] = useState(false);
+    const [soloActivos, setSoloActivos] = useState('0'); // '0' = Todas, '1' = Solo activas
     const [pagina, setPagina] = useState(0);
-    const [filasPorPagina, setFilasPorPagina] = useState(10);
+    const [filasPorPagina] = useState(10);
+    const [busquedaRealizada, setBusquedaRealizada] = useState(false);
 
     // Estados de carga
     const [cargando, setCargando] = useState(false);
     const [guardando, setGuardando] = useState(false);
     const [eliminando, setEliminando] = useState(false);
 
-    // Estados del Modal Crear / Editar
+    // Estados modales
     const [modalAbierto, setModalAbierto] = useState(false);
     const [codigoEdicion, setCodigoEdicion] = useState(null);
     const [formulario, setFormulario] = useState(FORMULARIO_VACIO);
-
-    // Estado del Modal de Confirmación de Eliminación
     const [especialidadAEliminar, setEspecialidadAEliminar] = useState(null);
-
-    // Alertas tipo Feedback
     const [feedback, setFeedback] = useState(null);
 
-    const cargarEspecialidades = useCallback(async () => {
+    useEffect(() => {
+        const styleSheet = document.createElement("style");
+        styleSheet.innerText = premiumStyles;
+        document.head.appendChild(styleSheet);
+        return () => styleSheet.remove();
+    }, []);
+
+    const cargarDatosBasicos = useCallback(async () => {
+        try {
+            const respFacultades = await facultadService.listar();
+            const facultadesData = Array.isArray(respFacultades) ? respFacultades : (respFacultades?.data || []);
+            setListaFacultades(facultadesData.filter(f => f.estado === 'ACTIVO'));
+        } catch (error) {
+            console.error("Error al cargar facultades", error);
+        }
+    }, []);
+
+    const cargarEspecialidades = useCallback(async (e) => {
+        if(e) e.preventDefault();
         setCargando(true);
+        setBusquedaRealizada(true);
         try {
             const params = {};
             if (busqueda.trim()) params.buscar = busqueda.trim();
-            if (soloActivos) params.solo_activos = 1;
+            if (soloActivos === '1') params.solo_activos = 1;
 
             const respuesta = await especialidadService.listar(params);
             const resultado = Array.isArray(respuesta) ? respuesta : (respuesta?.data || []);
             setEspecialidades(resultado);
+            setPagina(0);
         } catch (error) {
             setEspecialidades([]);
-            setFeedback({ type: 'error', message: obtenerErrores(error) });
+            mostrarFeedback('error', obtenerErrores(error));
         } finally {
             setCargando(false);
         }
     }, [busqueda, soloActivos]);
 
     useEffect(() => {
+        cargarDatosBasicos();
         cargarEspecialidades();
-    }, [cargarEspecialidades]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    const mostrarFeedback = (tipo, mensaje) => {
+        setFeedback({ tipo, mensaje });
+        setTimeout(() => setFeedback(null), 4000);
+    };
 
     const abrirNuevaEspecialidad = () => {
         setCodigoEdicion(null);
@@ -85,22 +249,23 @@ export default function Especialidades() {
             setFormulario({
                 codigo: encontrada.codigo || '',
                 nombre: encontrada.nombre || '',
+                facultad_id: encontrada.facultad_id || encontrada.facultad?.id || '',
                 estado: encontrada.estado || 'ACTIVO',
             });
             setModalAbierto(true);
         } catch (error) {
-            // Respaldo con el registro de la tabla si falla o no está activo el endpoint show()
             const local = especialidades.find((item) => item.codigo === codigo);
             if (local) {
                 setCodigoEdicion(local.codigo);
                 setFormulario({
                     codigo: local.codigo,
                     nombre: local.nombre,
+                    facultad_id: local.facultad_id || local.facultad?.id || '',
                     estado: local.estado || 'ACTIVO',
                 });
                 setModalAbierto(true);
             } else {
-                setFeedback({ type: 'error', message: obtenerErrores(error) });
+                mostrarFeedback('error', obtenerErrores(error));
             }
         }
     };
@@ -111,8 +276,18 @@ export default function Especialidades() {
         setCodigoEdicion(null);
     };
 
-    const actualizarCampo = (campo, valor) =>
-        setFormulario((prev) => ({ ...prev, [campo]: valor }));
+    const limpiarFiltros = () => {
+        setBusqueda('');
+        setSoloActivos('0');
+        setBusquedaRealizada(false);
+        cargarEspecialidades();
+    };
+
+    const actualizarCampo = (e) => {
+        const { name, value } = e.target;
+        const valFinal = name === 'codigo' ? value.toUpperCase() : value;
+        setFormulario((prev) => ({ ...prev, [name]: valFinal }));
+    };
 
     const guardarEspecialidad = async (event) => {
         event.preventDefault();
@@ -121,28 +296,22 @@ export default function Especialidades() {
         const datos = {
             codigo: formulario.codigo.trim().toUpperCase(),
             nombre: formulario.nombre.trim(),
+            facultad_id: formulario.facultad_id,
             estado: formulario.estado,
         };
 
         try {
             if (codigoEdicion !== null) {
                 await especialidadService.actualizar(codigoEdicion, datos);
-                setFeedback({
-                    type: 'success',
-                    message: `Especialidad "${codigoEdicion}" actualizada correctamente en el sistema.`,
-                });
+                mostrarFeedback('success', `Especialidad "${codigoEdicion}" actualizada correctamente.`);
             } else {
                 await especialidadService.registrar(datos);
-                setFeedback({
-                    type: 'success',
-                    message: 'Especialidad registrada correctamente en el sistema.',
-                });
+                mostrarFeedback('success', 'Especialidad registrada correctamente.');
             }
-            setModalAbierto(false);
-            setCodigoEdicion(null);
+            cerrarModal();
             await cargarEspecialidades();
         } catch (error) {
-            setFeedback({ type: 'error', message: obtenerErrores(error) });
+            mostrarFeedback('error', obtenerErrores(error));
         } finally {
             setGuardando(false);
         }
@@ -154,427 +323,346 @@ export default function Especialidades() {
 
         try {
             await especialidadService.eliminar(especialidadAEliminar.codigo);
-            setFeedback({
-                type: 'success',
-                message: `Especialidad "${especialidadAEliminar.codigo}" eliminada correctamente.`,
-            });
+            mostrarFeedback('success', `Especialidad eliminada correctamente.`);
             setEspecialidadAEliminar(null);
             await cargarEspecialidades();
         } catch (error) {
-            setFeedback({ type: 'error', message: obtenerErrores(error) });
+            mostrarFeedback('error', obtenerErrores(error));
         } finally {
             setEliminando(false);
         }
     };
 
-    // Paginación local sobre los resultados
+    const totalPaginas = Math.ceil(especialidades.length / filasPorPagina);
     const especialidadesPaginadas = especialidades.slice(
         pagina * filasPorPagina,
         pagina * filasPorPagina + filasPorPagina
     );
 
-    const inputStyle = { '& .MuiOutlinedInput-root': { borderRadius: 2 } };
-
     return (
-        <Container maxWidth="xl" sx={{ mt: 3, mb: 4 }}>
-
+        <div className="container-fluid px-4 py-5" style={{ maxWidth: '1400px' }}>
+            
             {/* Header */}
-            <Box
-                sx={{
-                    display: 'flex',
-                    flexDirection: { xs: 'column', sm: 'row' },
-                    justifyContent: 'space-between',
-                    alignItems: { xs: 'flex-start', sm: 'center' },
-                    gap: 2,
-                    mb: 3,
-                }}
-            >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <Box>
-                        <Typography variant="h5" sx={{ fontWeight: 700, color: THEME_COLORS.textPrimary }}>
-                            Catálogo de Especialidades (IESPP ARCO IRIS)
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: THEME_COLORS.textSecondary }}>
-                            Gestión oficial de carreras, códigos de especialidad y estado de disponibilidad académica.
-                        </Typography>
-                    </Box>
-                </Box>
+            <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+                <div>
+                    <h2 className="fw-bold mb-1" style={{ color: 'var(--slate-900)', letterSpacing: '-0.5px' }}>
+                        Catálogo de Especialidades
+                    </h2>
+                    <p className="mb-0 text-muted d-flex align-items-center gap-2">
+                        <BookOpen size={16} /> <span>Gestión oficial de carreras, asignación de facultades y estado académico.</span>
+                    </p>
+                </div>
+                <button onClick={abrirNuevaEspecialidad} className="btn btn-premium-dark px-4 py-2 d-flex align-items-center gap-2">
+                    <Plus size={18} /> <span>Nueva Especialidad</span>
+                </button>
+            </div>
 
-                <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
-                    <Button
-                        variant="contained"
-                        startIcon={<Plus size={18} />}
-                        onClick={abrirNuevaEspecialidad}
-                        sx={{
-                            backgroundColor: THEME_COLORS.primary,
-                            '&:hover': { backgroundColor: THEME_COLORS.primaryHover },
-                            textTransform: 'none',
-                            fontWeight: 700,
-                            px: 2.5,
-                            borderRadius: 2,
-                            boxShadow: '0 2px 8px rgba(2, 132, 199, 0.25)',
-                        }}
-                    >
-                        Nueva Especialidad
-                    </Button>
-                </Box>
-            </Box>
-
-            {/* Feedback Alert */}
             {feedback && (
-                <Alert
-                    severity={feedback.type}
-                    onClose={() => setFeedback(null)}
-                    sx={{ mb: 3, borderRadius: 2 }}
-                >
-                    {feedback.message}
-                </Alert>
+                <div className={`alert alert-${feedback.tipo === 'error' ? 'danger' : 'success'} border-0 shadow-sm rounded-3 py-3 d-flex align-items-center`} role="alert">
+                    <span className="fw-semibold">{feedback.mensaje}</span>
+                </div>
             )}
 
-            {/* Barra de Búsqueda y Filtros */}
-            <Paper
-                elevation={0}
-                sx={{
-                    p: 2,
-                    mb: 2.5,
-                    borderRadius: 2,
-                    border: `1px solid ${THEME_COLORS.border}`,
-                    display: 'flex',
-                    flexDirection: { xs: 'column', md: 'row' },
-                    justifyContent: 'space-between',
-                    alignItems: { xs: 'stretch', md: 'center' },
-                    gap: 2,
-                }}
-            >
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center', flex: 1 }}>
-                    <TextField
-                        placeholder="Buscar por código (ej. EF, EI) o nombre de especialidad..."
-                        size="small"
-                        value={busqueda}
-                        onChange={(e) => {
-                            setBusqueda(e.target.value);
-                            setPagina(0);
-                        }}
-                        onKeyDown={(e) => e.key === 'Enter' && cargarEspecialidades()}
-                        sx={{ width: { xs: '100%', sm: 420 } }}
-                        InputProps={{
-                            startAdornment: (
-                                <InputAdornment position="start">
-                                    <Search size={18} style={{ color: THEME_COLORS.textSecondary }} />
-                                </InputAdornment>
-                            ),
-                        }}
-                    />
+            {/* Panel de Filtros Ultra Moderno */}
+            <div className="premium-card p-4 mb-4">
+                <form onSubmit={cargarEspecialidades}>
+                    <div className="row g-4 align-items-end">
+                        
+                        <div className="col-12 col-md-6">
+                            <div className="premium-input-group h-100 d-flex flex-column justify-content-end">
+                                <label className="filter-label"><Search size={14} /> Buscar Especialidad</label>
+                                <div className="position-relative">
+                                    <input 
+                                        type="text" 
+                                        className="form-control" 
+                                        style={{ paddingLeft: '2.5rem' }}
+                                        placeholder="Buscar por código (ej. EF) o nombre..."
+                                        value={busqueda}
+                                        onChange={(e) => setBusqueda(e.target.value)}
+                                    />
+                                    <Search size={16} className="position-absolute text-muted" style={{ left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+                                </div>
+                            </div>
+                        </div>
 
-                    <FormControlLabel
-                        control={
-                            <Checkbox
-                                size="small"
-                                checked={soloActivos}
-                                onChange={(e) => {
-                                    setSoloActivos(e.target.checked);
-                                    setPagina(0);
-                                }}
-                            />
-                        }
-                        label={
-                            <Typography variant="body2" sx={{ color: THEME_COLORS.textSecondary, fontWeight: 500 }}>
-                                Solo activas
-                            </Typography>
-                        }
-                    />
-                </Box>
+                        <div className="col-12 col-md-3">
+                            <div className="premium-input-group">
+                                <label className="filter-label">Estado Operativo</label>
+                                <select className="form-select" value={soloActivos} onChange={(e) => setSoloActivos(e.target.value)}>
+                                    <option value="0">Todas las Especialidades</option>
+                                    <option value="1">Solo Especialidades Activas</option>
+                                </select>
+                            </div>
+                        </div>
 
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Button
-                        variant="outlined"
-                        startIcon={<Search size={16} />}
-                        onClick={() => { setPagina(0); cargarEspecialidades(); }}
-                        size="small"
-                        sx={{ textTransform: 'none' }}
-                    >
-                        Buscar
-                    </Button>
-                    <Button
-                        variant="outlined"
-                        startIcon={<RefreshCw size={16} />}
-                        onClick={() => {
-                            setBusqueda('');
-                            setSoloActivos(false);
-                            setPagina(0);
-                        }}
-                        size="small"
-                        sx={{ textTransform: 'none', color: THEME_COLORS.textSecondary, borderColor: THEME_COLORS.border }}
-                    >
-                        Limpiar
-                    </Button>
-                </Box>
-            </Paper>
+                        <div className="col-12 col-md-3 d-flex gap-2">
+                            <button type="button" className="btn btn-light border text-muted fw-medium d-flex align-items-center justify-content-center gap-2 w-100" onClick={limpiarFiltros} title="Limpiar">
+                                <RefreshCcw size={16} /> 
+                            </button>
+                            <button type="submit" className="btn btn-premium-accent d-flex align-items-center justify-content-center gap-2 w-100">
+                                <Filter size={16} /> Buscar
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
 
             {/* Tabla Principal */}
-            <TableContainer component={Paper} elevation={0} sx={{ border: `1px solid ${THEME_COLORS.border}`, borderRadius: 2 }}>
-                <Table sx={{ minWidth: 700 }}>
-                    <TableHead sx={{ backgroundColor: '#f8fafc' }}>
-                        <TableRow>
-                            <TableCell sx={{ fontWeight: 700, width: '20%' }}>Código Especialidad</TableCell>
-                            <TableCell sx={{ fontWeight: 700, width: '50%' }}>Nombre de la Especialidad</TableCell>
-                            <TableCell align="center" sx={{ fontWeight: 700, width: '15%' }}>Estado</TableCell>
-                            <TableCell align="center" sx={{ fontWeight: 700, width: '15%' }}>Acciones</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {cargando ? (
-                            <TableRow>
-                                <TableCell colSpan={4} align="center" sx={{ py: 6 }}>
-                                    <CircularProgress size={30} />
-                                </TableCell>
-                            </TableRow>
-                        ) : especialidadesPaginadas.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={4} align="center" sx={{ py: 5, color: THEME_COLORS.textSecondary }}>
-                                    <GraduationCap size={40} color={THEME_COLORS.border} style={{ marginBottom: 16 }} />
-                                    <Typography variant="body1" sx={{ fontWeight: 600 }}>No se encontraron especialidades</Typography>
-                                    <Typography variant="body2">Ajusta los criterios de búsqueda o registra una nueva especialidad.</Typography>
-                                </TableCell>
-                            </TableRow>
-                        ) : (
-                            especialidadesPaginadas.map((item) => (
-                                <TableRow hover key={item.codigo}>
-                                    <TableCell>
-                                        <Typography variant="body2" sx={{ fontWeight: 700, color: THEME_COLORS.primary }}>
-                                            {item.codigo}
-                                        </Typography>
-                                    </TableCell>
+            <div className="premium-card overflow-hidden">
+                {!busquedaRealizada && especialidades.length === 0 ? (
+                    <div className="text-center py-5" style={{ minHeight: '300px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+                        <div className="bg-light rounded-circle d-flex align-items-center justify-content-center mb-3" style={{ width: '80px', height: '80px' }}>
+                            <GraduationCap size={36} className="text-muted opacity-50" />
+                        </div>
+                        <h5 className="fw-bold" style={{ color: 'var(--slate-800)' }}>Catálogo Vacío</h5>
+                        <p className="text-muted mb-0" style={{ maxWidth: '400px' }}>
+                            Aún no hay especialidades registradas. Haga clic en "Nueva Especialidad" para comenzar.
+                        </p>
+                    </div>
+                ) : cargando ? (
+                    <div className="text-center py-5">
+                        <div className="spinner-border text-primary" role="status"></div>
+                    </div>
+                ) : especialidades.length === 0 ? (
+                    <div className="text-center py-5">
+                        <div className="bg-light rounded-circle d-flex align-items-center justify-content-center mb-3 mx-auto" style={{ width: '80px', height: '80px' }}>
+                            <Search size={36} className="text-muted opacity-50" />
+                        </div>
+                        <h5 className="fw-bold" style={{ color: 'var(--slate-800)' }}>No hay resultados</h5>
+                        <p className="text-muted mb-0">No se encontraron especialidades que coincidan con los filtros aplicados.</p>
+                    </div>
+                ) : (
+                    <>
+                        <div className="table-responsive">
+                            <table className="table premium-table">
+                                <thead>
+                                    <tr>
+                                        <th className="ps-4" style={{ width: '15%' }}>Código</th>
+                                        <th style={{ width: '35%' }}>Nombre de la Especialidad</th>
+                                        <th style={{ width: '25%' }}>Facultad</th>
+                                        <th className="text-center" style={{ width: '10%' }}>Estado</th>
+                                        <th className="text-end pe-4" style={{ width: '15%' }}>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {especialidadesPaginadas.map((item) => (
+                                        <tr key={item.codigo}>
+                                            <td className="ps-4">
+                                                <div className="fw-bold text-primary mb-0" style={{ fontSize: '0.95rem' }}>
+                                                    {item.codigo}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div className="fw-semibold text-dark" style={{ fontSize: '0.9rem' }}>
+                                                    {item.nombre}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div className="d-flex align-items-center gap-2 text-muted" style={{ fontSize: '0.85rem' }}>
+                                                    <Building2 size={16} /> 
+                                                    {item.facultad?.nombre || 'Sin Asignar'}
+                                                </div>
+                                            </td>
+                                            <td className="text-center">
+                                                <span className={`badge px-2 py-1 rounded-pill ${item.estado === 'ACTIVO' ? 'badge-soft-success' : 'badge-soft-danger'}`} style={{ fontSize: '0.75rem', letterSpacing: '0.5px' }}>
+                                                    {item.estado}
+                                                </span>
+                                            </td>
+                                            <td className="text-end pe-4">
+                                                <div className="d-flex justify-content-end gap-2">
+                                                    <button 
+                                                        className="btn btn-sm btn-light border text-primary shadow-sm"
+                                                        onClick={() => abrirEdicionPorCodigo(item.codigo)}
+                                                        title="Editar Especialidad"
+                                                        style={{ borderRadius: '6px' }}
+                                                    >
+                                                        <Pencil size={16} />
+                                                    </button>
+                                                    <button 
+                                                        className="btn btn-sm btn-light border text-danger shadow-sm"
+                                                        onClick={() => setEspecialidadAEliminar(item)}
+                                                        title="Eliminar Especialidad"
+                                                        style={{ borderRadius: '6px' }}
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
 
-                                    <TableCell>
-                                        <Typography variant="body2" sx={{ fontWeight: 600, color: THEME_COLORS.textPrimary }}>
-                                            {item.nombre}
-                                        </Typography>
-                                    </TableCell>
-
-                                    <TableCell align="center">
-                                        <Chip
-                                            label={item.estado}
-                                            size="small"
-                                            sx={{
-                                                fontWeight: 700,
-                                                fontSize: '0.72rem',
-                                                backgroundColor: item.estado === 'ACTIVO' ? '#dcfce7' : '#fee2e2',
-                                                color: item.estado === 'ACTIVO' ? '#166534' : '#991b1b',
-                                            }}
-                                        />
-                                    </TableCell>
-
-                                    <TableCell align="center">
-                                        <Stack direction="row" spacing={1} justifyContent="center">
-                                            <Tooltip title="Editar Especialidad por Código">
-                                                <IconButton
-                                                    onClick={() => abrirEdicionPorCodigo(item.codigo)}
-                                                    size="small"
-                                                    sx={{
-                                                        color: THEME_COLORS.primary,
-                                                        backgroundColor: '#f0f9ff',
-                                                        borderRadius: 2,
-                                                        '&:hover': { backgroundColor: '#e0f2fe' },
-                                                    }}
-                                                >
-                                                    <Pencil size={16} />
-                                                </IconButton>
-                                            </Tooltip>
-
-                                            <Tooltip title="Eliminar Especialidad">
-                                                <IconButton
-                                                    onClick={() => setEspecialidadAEliminar(item)}
-                                                    size="small"
-                                                    sx={{
-                                                        color: '#dc2626',
-                                                        backgroundColor: '#fef2f2',
-                                                        borderRadius: 2,
-                                                        '&:hover': { backgroundColor: '#fee2e2' },
-                                                    }}
-                                                >
-                                                    <Trash2 size={16} />
-                                                </IconButton>
-                                            </Tooltip>
-                                        </Stack>
-                                    </TableCell>
-                                </TableRow>
-                            ))
+                        {/* Paginación */}
+                        {especialidades.length > filasPorPagina && (
+                            <div className="d-flex justify-content-between align-items-center p-3 border-top bg-light bg-opacity-50">
+                                <span className="text-muted small fw-medium">
+                                    Mostrando {pagina * filasPorPagina + 1} a {Math.min((pagina + 1) * filasPorPagina, especialidades.length)} de {especialidades.length} registros
+                                </span>
+                                <div className="d-flex gap-1">
+                                    <button 
+                                        className="btn btn-sm btn-white border shadow-sm" 
+                                        onClick={() => setPagina(p => Math.max(0, p - 1))}
+                                        disabled={pagina === 0}
+                                    >
+                                        <ChevronLeft size={16} />
+                                    </button>
+                                    <button 
+                                        className="btn btn-sm btn-white border shadow-sm" 
+                                        onClick={() => setPagina(p => Math.min(totalPaginas - 1, p + 1))}
+                                        disabled={pagina >= totalPaginas - 1}
+                                    >
+                                        <ChevronRight size={16} />
+                                    </button>
+                                </div>
+                            </div>
                         )}
-                    </TableBody>
-                </Table>
-                <TablePagination
-                    component="div"
-                    count={especialidades.length}
-                    page={pagina}
-                    onPageChange={(e, newPage) => setPagina(newPage)}
-                    rowsPerPage={filasPorPagina}
-                    onRowsPerPageChange={(e) => {
-                        setFilasPorPagina(parseInt(e.target.value, 10));
-                        setPagina(0);
-                    }}
-                    labelRowsPerPage="Filas por página:"
-                    sx={{ borderTop: `1px solid ${THEME_COLORS.border}` }}
-                />
-            </TableContainer>
+                    </>
+                )}
+            </div>
 
-            {/* MODAL DE REGISTRO/EDICIÓN POR CÓDIGO (DIALOG) */}
-            <Dialog
-                open={modalAbierto}
-                onClose={cerrarModal}
-                fullWidth
-                maxWidth="sm"
-                PaperProps={{ sx: { borderRadius: 3 } }}
-            >
-                <Box component="form" onSubmit={guardarEspecialidad}>
+            {/* Modal Crear / Editar */}
+            {modalAbierto && (
+                <>
+                    <div className="modal fade show d-block" tabIndex="-1" style={{ zIndex: 1055 }}>
+                        <div className="modal-dialog modal-dialog-centered">
+                            <div className="modal-content premium-modal">
+                                
+                                <div className="modal-header d-flex justify-content-between align-items-center">
+                                    <div className="d-flex align-items-center gap-3">
+                                        <div className="bg-white bg-opacity-10 p-2 rounded-3">
+                                            <BookOpen size={24} className="text-white" />
+                                        </div>
+                                        <div>
+                                            <h5 className="modal-title fw-bold mb-0 text-white">
+                                                {codigoEdicion ? `Actualizar Especialidad` : 'Nueva Especialidad'}
+                                            </h5>
+                                            <small className="text-white-50">Datos oficiales académicos</small>
+                                        </div>
+                                    </div>
+                                    <button type="button" className="btn-close btn-close-white" onClick={cerrarModal}></button>
+                                </div>
 
-                    {/* Header del Modal */}
-                    <DialogTitle sx={{ p: 3, borderBottom: `1px solid ${THEME_COLORS.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Stack direction="row" spacing={1.5} alignItems="center">
-                            <Box sx={{ backgroundColor: THEME_COLORS.primary, color: '#fff', p: 1, borderRadius: 2, display: 'flex' }}>
-                                <BookOpen size={20} />
-                            </Box>
-                            <Box>
-                                <Typography variant="h6" sx={{ fontWeight: 700, color: THEME_COLORS.textPrimary, lineHeight: 1.2 }}>
-                                    {codigoEdicion !== null ? `Actualizar Especialidad (${codigoEdicion})` : 'Nueva Especialidad'}
-                                </Typography>
-                                <Typography variant="caption" sx={{ color: THEME_COLORS.textSecondary }}>
-                                    Datos oficiales de la especialidad académica
-                                </Typography>
-                            </Box>
-                        </Stack>
-                        <IconButton onClick={cerrarModal} size="small" sx={{ backgroundColor: '#f1f5f9' }}>
-                            <X size={18} />
-                        </IconButton>
-                    </DialogTitle>
+                                <div className="modal-body p-4">
+                                    <form id="form-especialidad" onSubmit={guardarEspecialidad}>
+                                        <div className="row g-3">
+                                            <div className="col-12">
+                                                <h6 className="fw-bold mb-2 text-primary border-bottom pb-2">
+                                                    1. Información de la Especialidad
+                                                </h6>
+                                            </div>
 
-                    {/* Cuerpo del Modal */}
-                    <DialogContent sx={{ p: 3 }}>
-                        <Grid container spacing={2.5}>
-                            <Grid item xs={12}>
-                                <Typography variant="overline" sx={{ fontWeight: 800, color: THEME_COLORS.textSecondary }}>
-                                    1. Información de la Especialidad
-                                </Typography>
-                            </Grid>
+                                            <div className="col-md-5">
+                                                <div className="premium-input-group">
+                                                    <label className="filter-label">Código *</label>
+                                                    <input 
+                                                        type="text" 
+                                                        className="form-control text-uppercase" 
+                                                        name="codigo"
+                                                        placeholder="Ej. EF" 
+                                                        value={formulario.codigo} 
+                                                        onChange={actualizarCampo} 
+                                                        disabled={codigoEdicion !== null}
+                                                        required 
+                                                    />
+                                                </div>
+                                            </div>
 
-                            <Grid item xs={12} sm={5}>
-                                <TextField
-                                    fullWidth
-                                    required
-                                    label="Código"
-                                    placeholder="Ej. EF, EI, ESP-01"
-                                    size="small"
-                                    value={formulario.codigo}
-                                    disabled={codigoEdicion !== null}
-                                    onChange={(e) => actualizarCampo('codigo', e.target.value.toUpperCase())}
-                                    sx={inputStyle}
-                                />
-                            </Grid>
+                                            <div className="col-md-7">
+                                                <div className="premium-input-group">
+                                                    <label className="filter-label">Estado Operativo *</label>
+                                                    <select className="form-select" name="estado" value={formulario.estado} onChange={actualizarCampo} required>
+                                                        <option value="ACTIVO">ACTIVO</option>
+                                                        <option value="INACTIVO">INACTIVO</option>
+                                                    </select>
+                                                </div>
+                                            </div>
 
-                            <Grid item xs={12} sm={7}>
-                                <TextField
-                                    select
-                                    fullWidth
-                                    required
-                                    label="Estado"
-                                    size="small"
-                                    value={formulario.estado}
-                                    onChange={(e) => actualizarCampo('estado', e.target.value)}
-                                    sx={inputStyle}
-                                >
-                                    <MenuItem value="ACTIVO">ACTIVO</MenuItem>
-                                    <MenuItem value="INACTIVO">INACTIVO</MenuItem>
-                                </TextField>
-                            </Grid>
+                                            <div className="col-12">
+                                                <div className="premium-input-group">
+                                                    <label className="filter-label">Nombre de la Especialidad *</label>
+                                                    <input 
+                                                        type="text" 
+                                                        className="form-control" 
+                                                        name="nombre"
+                                                        placeholder="Ej. EDUCACIÓN FÍSICA" 
+                                                        value={formulario.nombre} 
+                                                        onChange={actualizarCampo} 
+                                                        required 
+                                                    />
+                                                </div>
+                                            </div>
 
-                            <Grid item xs={12}>
-                                <TextField
-                                    fullWidth
-                                    required
-                                    label="Nombre de la Especialidad"
-                                    placeholder="Ej. EDUCACIÓN FÍSICA"
-                                    size="small"
-                                    value={formulario.nombre}
-                                    onChange={(e) => actualizarCampo('nombre', e.target.value)}
-                                    sx={inputStyle}
-                                />
-                            </Grid>
-                        </Grid>
-                    </DialogContent>
+                                            <div className="col-12 mt-4">
+                                                <h6 className="fw-bold mb-2 text-primary border-bottom pb-2">
+                                                    2. Asignación de Facultad
+                                                </h6>
+                                            </div>
 
-                    {/* Footer del Modal */}
-                    <DialogActions sx={{ p: 3, borderTop: `1px solid ${THEME_COLORS.border}`, gap: 1 }}>
-                        <Button
-                            onClick={cerrarModal}
-                            disabled={guardando}
-                            sx={{ color: THEME_COLORS.textSecondary, fontWeight: 600, textTransform: 'none' }}
-                        >
-                            Cancelar
-                        </Button>
-                        <Button
-                            type="submit"
-                            variant="contained"
-                            disabled={guardando}
-                            sx={{
-                                backgroundColor: THEME_COLORS.primary,
-                                borderRadius: 2,
-                                px: 3,
-                                textTransform: 'none',
-                                fontWeight: 700,
-                                '&:hover': { backgroundColor: THEME_COLORS.primaryHover },
-                            }}
-                        >
-                            {guardando ? 'Guardando...' : codigoEdicion !== null ? 'Guardar Cambios' : 'Guardar Especialidad'}
-                        </Button>
-                    </DialogActions>
-                </Box>
-            </Dialog>
+                                            <div className="col-12">
+                                                <div className="premium-input-group">
+                                                    <label className="filter-label">Facultad Correspondiente *</label>
+                                                    <select className="form-select" name="facultad_id" value={formulario.facultad_id} onChange={actualizarCampo} required>
+                                                        <option value="" disabled>Seleccione una facultad...</option>
+                                                        {listaFacultades.map(facultad => (
+                                                            <option key={facultad.id} value={facultad.id}>
+                                                                {facultad.nombre} ({facultad.codigo})
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
 
-            {/* MODAL DE CONFIRMACIÓN DE ELIMINACIÓN */}
-            <Dialog
-                open={Boolean(especialidadAEliminar)}
-                onClose={() => !eliminando && setEspecialidadAEliminar(null)}
-                maxWidth="xs"
-                fullWidth
-                PaperProps={{ sx: { borderRadius: 3 } }}
-            >
-                <DialogTitle sx={{ p: 2.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <Box sx={{ backgroundColor: '#fef2f2', color: '#dc2626', p: 1, borderRadius: 2, display: 'flex' }}>
-                        <AlertTriangle size={20} />
-                    </Box>
-                    <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                        Confirmar Eliminación
-                    </Typography>
-                </DialogTitle>
-                <DialogContent sx={{ px: 3, pb: 2 }}>
-                    <Typography variant="body2" sx={{ color: THEME_COLORS.textSecondary }}>
-                        ¿Estás seguro de que deseas eliminar la especialidad <strong>{especialidadAEliminar?.codigo} - {especialidadAEliminar?.nombre}</strong>? Esta acción no se puede deshacer.
-                    </Typography>
-                </DialogContent>
-                <DialogActions sx={{ p: 2.5, borderTop: `1px solid ${THEME_COLORS.border}`, gap: 1 }}>
-                    <Button
-                        onClick={() => setEspecialidadAEliminar(null)}
-                        disabled={eliminando}
-                        sx={{ color: THEME_COLORS.textSecondary, fontWeight: 600, textTransform: 'none' }}
-                    >
-                        Cancelar
-                    </Button>
-                    <Button
-                        onClick={confirmarEliminacion}
-                        variant="contained"
-                        disabled={eliminando}
-                        sx={{
-                            backgroundColor: '#dc2626',
-                            '&:hover': { backgroundColor: '#b91c1c' },
-                            borderRadius: 2,
-                            textTransform: 'none',
-                            fontWeight: 700,
-                        }}
-                    >
-                        {eliminando ? 'Eliminando...' : 'Sí, Eliminar'}
-                    </Button>
-                </DialogActions>
-            </Dialog>
-        </Container>
+                                <div className="modal-footer d-flex justify-content-end gap-2">
+                                    <button type="button" className="btn btn-light fw-medium px-4" onClick={cerrarModal} disabled={guardando}>
+                                        Cancelar
+                                    </button>
+                                    <button type="submit" form="form-especialidad" className="btn btn-premium-accent fw-medium px-4" disabled={guardando}>
+                                        {guardando ? 'Guardando...' : codigoEdicion ? 'Guardar Cambios' : 'Registrar Especialidad'}
+                                    </button>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                    <div className="modal-backdrop fade show" style={{ backgroundColor: '#0f172a', opacity: 0.6 }}></div>
+                </>
+            )}
+
+            {/* Modal Confirmar Eliminación */}
+            {especialidadAEliminar && (
+                <>
+                    <div className="modal fade show d-block" tabIndex="-1" style={{ zIndex: 1055 }}>
+                        <div className="modal-dialog modal-dialog-centered modal-sm">
+                            <div className="modal-content premium-modal modal-danger">
+                                <div className="modal-body p-4 text-center">
+                                    <div className="bg-danger bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style={{ width: '64px', height: '64px' }}>
+                                        <AlertTriangle size={32} className="text-danger" />
+                                    </div>
+                                    <h5 className="fw-bold text-dark mb-2">¿Eliminar Especialidad?</h5>
+                                    <p className="text-muted small mb-0">
+                                        Estás a punto de eliminar <strong>{especialidadAEliminar.nombre} ({especialidadAEliminar.codigo})</strong>. Esta acción no se puede deshacer.
+                                    </p>
+                                </div>
+                                <div className="modal-footer bg-light border-top d-flex flex-nowrap p-0">
+                                    <button type="button" className="btn btn-link text-muted fw-semibold text-decoration-none w-50 py-3 border-end m-0 rounded-0" onClick={() => setEspecialidadAEliminar(null)} disabled={eliminando}>
+                                        Cancelar
+                                    </button>
+                                    <button type="button" className="btn btn-link text-danger fw-bold text-decoration-none w-50 py-3 m-0 rounded-0" onClick={confirmarEliminacion} disabled={eliminando}>
+                                        {eliminando ? 'Eliminando...' : 'Sí, Eliminar'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="modal-backdrop fade show" style={{ backgroundColor: '#0f172a', opacity: 0.6 }}></div>
+                </>
+            )}
+
+        </div>
     );
 }

@@ -1,23 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-    Box, Container, Paper, Typography, Button, Table, TableBody,
-    TableCell, TableContainer, TableHead, TablePagination, TableRow,
-    TextField, Tooltip, Alert, CircularProgress, Dialog, DialogTitle,
-    DialogContent, DialogActions, Grid, MenuItem, InputAdornment, Stack,
-    Chip, FormControlLabel, Checkbox, Fade, IconButton
-} from '@mui/material';
-import {
-    Plus, Search, RefreshCw, X, Layers, BookOpen, AlertTriangle, Bookmark, Hash, AlignLeft
-} from 'lucide-react';
-
-import { seccionService } from '../../services/seccionesService';
+import { Search, RefreshCcw, Filter, Plus, Trash2, Layers, Building2, AlertTriangle, X, ChevronLeft, ChevronRight, Bookmark } from 'lucide-react';
+import { facultadService } from '../../services/facultadService';
 import { especialidadService } from '../../services/especialidadService';
-import { THEME_COLORS } from '../../theme/colors';
+import { seccionService } from '../../services/seccionesService';
 
-const FORMULARIO_VACIO = {
+const FORMULARIO_SECCION_VACIO = {
     codigo: '',
     nombre: '',
-    especialidad_codigo: '',
     estado: 'ACTIVO',
 };
 
@@ -34,49 +23,207 @@ function extraerArreglo(respuesta) {
     return [];
 }
 
+const premiumStyles = `
+    :root {
+        --slate-50: #f8fafc;
+        --slate-100: #f1f5f9;
+        --slate-200: #e2e8f0;
+        --slate-600: #475569;
+        --slate-800: #1e293b;
+        --slate-900: #0f172a; 
+        --teal-500: #14b8a6;
+        --teal-600: #0d9488;
+        --teal-700: #0f766e;
+        --sky-500: #0ea5e9; 
+        --sky-600: #0284c7;
+        --danger-500: #ef4444;
+        --danger-600: #dc2626;
+        --warning-500: #f59e0b;
+        --warning-600: #d97706;
+        --radius-lg: 12px;
+        --radius-xl: 16px;
+    }
+
+    body {
+        background-color: var(--slate-50);
+    }
+
+    .premium-card {
+        background: #ffffff;
+        border-radius: var(--radius-lg);
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+        transition: box-shadow 0.3s ease;
+    }
+
+    .btn-premium-dark {
+        background-color: var(--slate-900);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    .btn-premium-dark:hover {
+        background-color: var(--slate-800);
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+    }
+
+    .btn-premium-accent {
+        background-color: var(--teal-600);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    .btn-premium-accent:hover {
+        background-color: var(--teal-700);
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(13, 148, 136, 0.25);
+    }
+
+    .premium-input-group {
+        position: relative;
+    }
+    .premium-input-group .form-control, .premium-input-group .form-select {
+        border-radius: 8px;
+        border: 1px solid var(--slate-200);
+        padding: 0.65rem 1rem;
+        font-size: 0.9rem;
+        color: var(--slate-800);
+        background-color: var(--slate-50);
+        transition: all 0.2s;
+    }
+    .premium-input-group .form-control:focus, .premium-input-group .form-select:focus {
+        background-color: #fff;
+        border-color: var(--teal-500);
+        box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.1);
+    }
+    .filter-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--slate-600);
+        margin-bottom: 0.4rem;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .premium-table {
+        margin-bottom: 0;
+    }
+    .premium-table th {
+        background-color: #ffffff;
+        color: var(--slate-600);
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 1.25rem 1rem;
+        border-bottom: 2px solid var(--slate-100);
+    }
+    .premium-table td {
+        padding: 1.25rem 1rem;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--slate-100);
+        font-size: 0.9rem;
+        color: var(--slate-800);
+    }
+    .premium-table tbody tr:hover td {
+        background-color: var(--slate-50);
+    }
+
+    .modal-content.premium-modal {
+        border: none;
+        border-radius: var(--radius-xl);
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+    .premium-modal .modal-header {
+        background: linear-gradient(to right, var(--slate-900), #1e293b);
+        color: white;
+        border-bottom: none;
+        padding: 1.5rem;
+        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    }
+    .premium-modal.modal-danger .modal-header {
+        background: white;
+        color: var(--slate-900);
+        border-bottom: 1px solid var(--slate-200);
+    }
+    .premium-modal.modal-warning .modal-header {
+        background: white;
+        color: var(--slate-900);
+        border-bottom: 1px solid var(--slate-200);
+    }
+    .premium-modal .modal-footer {
+        background-color: var(--slate-50);
+        border-top: 1px solid var(--slate-200);
+        padding: 1.25rem 1.5rem;
+        border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+    }
+`;
+
 export default function SeccionesPorEspecialidad() {
-    // Estado principal de datos agrupados
-    const [carrerasAgrupadas, setCarrerasAgrupadas] = useState([]);
+    const [facultades, setFacultades] = useState([]);
+    const [facultadSeleccionadaId, setFacultadSeleccionadaId] = useState('');
     
-    // Estados de búsqueda, filtro y paginación
+    const [especialidadesAgrupadas, setEspecialidadesAgrupadas] = useState([]);
     const [busqueda, setBusqueda] = useState('');
-    const [soloActivos, setSoloActivos] = useState(false);
+    const [busquedaAplicada, setBusquedaAplicada] = useState('');
     const [pagina, setPagina] = useState(0);
     const [filasPorPagina, setFilasPorPagina] = useState(10);
 
-    // Estados de carga y retroalimentación
     const [cargando, setCargando] = useState(false);
     const [guardando, setGuardando] = useState(false);
     const [eliminando, setEliminando] = useState(false);
     const [feedback, setFeedback] = useState(null);
 
-    // Estados de Modales
     const [modalAbierto, setModalAbierto] = useState(false);
-    const [formulario, setFormulario] = useState(FORMULARIO_VACIO);
-    const [carreraSeleccionada, setCarreraSeleccionada] = useState(null);
+    const [formulario, setFormulario] = useState(FORMULARIO_SECCION_VACIO);
+    const [especialidadSeleccionada, setEspecialidadSeleccionada] = useState(null);
     const [seccionAEliminar, setSeccionAEliminar] = useState(null);
 
-    // Carga de datos: Especialidades y sus Secciones
+    useEffect(() => {
+        const styleSheet = document.createElement("style");
+        styleSheet.innerText = premiumStyles;
+        document.head.appendChild(styleSheet);
+        return () => styleSheet.remove();
+    }, []);
+
+    // 1. Cargar la lista de facultades al iniciar
+    useEffect(() => {
+        const cargarFacultades = async () => {
+            try {
+                const resp = await facultadService.listar();
+                const lista = extraerArreglo(resp);
+                setFacultades(lista);
+                if (lista.length > 0) {
+                    setFacultadSeleccionadaId(lista[0].id);
+                }
+            } catch (error) {
+                mostrarFeedback('error', obtenerErrores(error));
+            }
+        };
+        cargarFacultades();
+    }, []);
+
+    // 2. Cargar Especialidades de la Facultad seleccionada y sus Secciones
     const cargarDatos = useCallback(async () => {
+        if (!facultadSeleccionadaId) return;
+
         setCargando(true);
         setFeedback(null);
         try {
-            // 1. Obtener especialidades
-            const paramsEsp = {};
-            if (soloActivos) paramsEsp.solo_activos = 1;
-            const respEsp = await especialidadService.listar(paramsEsp);
+            const respEsp = await especialidadService.listar({ facultad_id: facultadSeleccionadaId });
             let listaEsp = extraerArreglo(respEsp);
 
-            // Filtro local de búsqueda
-            if (busqueda.trim()) {
-                const term = busqueda.toLowerCase().trim();
-                listaEsp = listaEsp.filter(e => 
-                    (e.codigo && String(e.codigo).toLowerCase().includes(term)) || 
-                    (e.nombre && String(e.nombre).toLowerCase().includes(term))
-                );
-            }
+            listaEsp = listaEsp.filter(e => String(e.facultad_id) === String(facultadSeleccionadaId));
 
-            // 2. Obtener todas las secciones
             let listaSec = [];
             try {
                 const respSec = await seccionService.listar();
@@ -85,11 +232,13 @@ export default function SeccionesPorEspecialidad() {
                 console.warn('No se pudieron obtener secciones globales:', err);
             }
 
-            // 3. Agrupar Secciones dentro de Especialidades
             const agrupado = listaEsp.map((esp) => {
                 const codEsp = String(esp.codigo || esp.id).trim();
-                const secAsociadas = listaSec.filter(sec => String(sec.especialidad_codigo || sec.carrera_id).trim() === codEsp);
+                const secAsociadas = listaSec.filter(sec => 
+                    String(sec.especialidad_codigo || sec.carrera_id || sec.especialidad_id).trim() === codEsp
+                );
                 return {
+                    id: esp.id,
                     codigo: codEsp,
                     nombre: esp.nombre || 'Sin nombre',
                     estado: esp.estado || 'ACTIVO',
@@ -97,26 +246,27 @@ export default function SeccionesPorEspecialidad() {
                 };
             });
 
-            setCarrerasAgrupadas(agrupado);
+            setEspecialidadesAgrupadas(agrupado);
         } catch (error) {
-            setCarrerasAgrupadas([]);
-            setFeedback({ type: 'error', message: obtenerErrores(error) });
+            setEspecialidadesAgrupadas([]);
+            mostrarFeedback('error', obtenerErrores(error));
         } finally {
             setCargando(false);
         }
-    }, [busqueda, soloActivos]);
+    }, [facultadSeleccionadaId]);
 
     useEffect(() => {
         cargarDatos();
     }, [cargarDatos]);
 
-    // Abrir modal preseleccionando la especialidad de la fila
-    const abrirNuevaSeccion = (carrera) => {
-        setCarreraSeleccionada(carrera);
-        setFormulario({
-            ...FORMULARIO_VACIO,
-            especialidad_codigo: carrera.codigo
-        });
+    const mostrarFeedback = (tipo, mensaje) => {
+        setFeedback({ tipo, message: mensaje });
+        setTimeout(() => setFeedback(null), 4000);
+    };
+
+    const abrirNuevaSeccion = (especialidad) => {
+        setEspecialidadSeleccionada(especialidad);
+        setFormulario(FORMULARIO_SECCION_VACIO);
         setModalAbierto(true);
     };
 
@@ -125,18 +275,21 @@ export default function SeccionesPorEspecialidad() {
         setModalAbierto(false);
     };
 
-    const actualizarCampo = (campo, valor) => setFormulario((prev) => ({ ...prev, [campo]: valor }));
+    const actualizarCampo = (e) => {
+        const { name, value } = e.target;
+        setFormulario((prev) => ({ ...prev, [name]: value }));
+    };
 
-    const guardarSeccion = async (event) => {
-        event.preventDefault();
+    const guardarSeccion = async (e) => {
+        e.preventDefault();
         setGuardando(true);
 
         const codigoSec = formulario.codigo.trim().toUpperCase();
         const datos = {
             codigo: codigoSec,
             nombre: formulario.nombre.trim() || `SECCIÓN ${codigoSec}`,
-            especialidad_codigo: formulario.especialidad_codigo,
-            carrera_id: formulario.especialidad_codigo,
+            especialidad_codigo: especialidadSeleccionada.codigo,
+            especialidad_id: especialidadSeleccionada.id,
             estado: formulario.estado,
         };
 
@@ -147,11 +300,11 @@ export default function SeccionesPorEspecialidad() {
                 await seccionService.registrar(datos);
             }
 
-            setFeedback({ type: 'success', message: `Sección "${codigoSec}" registrada en ${formulario.especialidad_codigo}.` });
+            mostrarFeedback('success', `Sección "${codigoSec}" registrada correctamente en ${especialidadSeleccionada.nombre}.`);
             setModalAbierto(false);
             await cargarDatos();
         } catch (error) {
-            setFeedback({ type: 'error', message: obtenerErrores(error) });
+            mostrarFeedback('error', obtenerErrores(error));
         } finally {
             setGuardando(false);
         }
@@ -168,565 +321,386 @@ export default function SeccionesPorEspecialidad() {
                 await seccionService.eliminar(seccionAEliminar.codigo);
             }
             
-            setFeedback({ type: 'success', message: `Sección "${seccionAEliminar.codigo}" eliminada correctamente.` });
+            mostrarFeedback('success', `Sección "${seccionAEliminar.codigo}" eliminada correctamente.`);
             setSeccionAEliminar(null);
             await cargarDatos();
         } catch (error) {
-            setFeedback({ type: 'error', message: obtenerErrores(error) });
+            mostrarFeedback('error', obtenerErrores(error));
         } finally {
             setEliminando(false);
         }
     };
 
-    const carrerasPaginadas = carrerasAgrupadas.slice(
-        pagina * filasPorPagina,
-        pagina * filasPorPagina + filasPorPagina
-    );
+    const especialidadesFiltradas = especialidadesAgrupadas.filter((esp) => {
+        if (!busquedaAplicada.trim()) return true;
+        const term = busquedaAplicada.toLowerCase();
+        return (
+            (esp.codigo && esp.codigo.toLowerCase().includes(term)) ||
+            (esp.nombre && esp.nombre.toLowerCase().includes(term))
+        );
+    });
 
-    const inputStyle = { 
-        '& .MuiOutlinedInput-root': { 
-            borderRadius: 2,
-            transition: '0.3s ease-in-out',
-            backgroundColor: '#ffffff',
-            '&:hover fieldset': { borderColor: THEME_COLORS.primary },
-            '&.Mui-focused fieldset': { boxShadow: `0 0 0 3px ${THEME_COLORS.primary}20` }
-        } 
-    };
+    const totalPaginas = Math.ceil(especialidadesFiltradas.length / filasPorPagina);
+    const especialidadesPaginadas = especialidadesFiltradas.slice(pagina * filasPorPagina, pagina * filasPorPagina + filasPorPagina);
 
     return (
-        <Fade in={true} timeout={500}>
-            <Container maxWidth="xl" sx={{ mt: { xs: 2, md: 4 }, mb: 4 }}>
+        <div className="container-fluid px-4 py-5" style={{ maxWidth: '1400px' }}>
+            
+            {/* Header */}
+            <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+                <div>
+                    <h2 className="fw-bold mb-1" style={{ color: 'var(--slate-900)', letterSpacing: '-0.5px' }}>
+                        Gestión de Secciones por Especialidad
+                    </h2>
+                    <p className="mb-0 text-muted d-flex align-items-center gap-2">
+                        <Layers size={16} /> <span>Selecciona una facultad para visualizar sus especialidades y administrar sus secciones operativas.</span>
+                    </p>
+                </div>
+            </div>
 
-                {/* --- HEADER MODERNIZADO --- */}
-                <Box
-                    sx={{
-                        display: 'flex',
-                        flexDirection: { xs: 'column', sm: 'row' },
-                        justifyContent: 'space-between',
-                        alignItems: { xs: 'flex-start', sm: 'center' },
-                        gap: 2,
-                        mb: 4,
-                    }}
-                >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Box 
-                            sx={{ 
-                                p: 1.5, 
-                                borderRadius: 3, 
-                                backgroundColor: '#e0f2fe', 
-                                color: THEME_COLORS.primary,
-                                display: 'flex'
-                            }}
-                        >
-                            <Layers size={26} />
-                        </Box>
-                        <Box>
-                            <Typography variant="h5" sx={{ fontWeight: 800, color: THEME_COLORS.textPrimary, letterSpacing: '-0.5px' }}>
-                                Gestión de Secciones por Especialidad
-                            </Typography>
-                            <Typography variant="body2" sx={{ color: THEME_COLORS.textSecondary, fontWeight: 500 }}>
-                                Administra los grupos operativos vinculados a cada programa de estudio.
-                            </Typography>
-                        </Box>
-                    </Box>
-                </Box>
+            {/* Feedback Alert */}
+            {feedback && (
+                <div className={`alert alert-${feedback.type === 'error' ? 'danger' : 'success'} border-0 shadow-sm rounded-3 py-3 d-flex align-items-center mb-4`} role="alert">
+                    <span className="fw-semibold">{feedback.message}</span>
+                </div>
+            )}
 
-                {feedback && (
-                    <Alert severity={feedback.type} onClose={() => setFeedback(null)} sx={{ mb: 3, borderRadius: 2, boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
-                        {feedback.message}
-                    </Alert>
-                )}
+            {/* Panel de Filtros y Selección de Facultad */}
+            <div className="premium-card p-4 mb-4">
+                <div className="row g-3 align-items-end">
+                    
+                    <div className="col-12 col-md-4">
+                        <div className="premium-input-group">
+                            <label className="filter-label"><Building2 size={14} /> Seleccionar Facultad <span className="text-danger ms-1">*</span></label>
+                            <select 
+                                className="form-select fw-bold text-dark" 
+                                value={facultadSeleccionadaId} 
+                                onChange={(e) => {
+                                    setFacultadSeleccionadaId(e.target.value);
+                                    setPagina(0);
+                                }}
+                            >
+                                {facultades.map((fac) => (
+                                    <option key={fac.id} value={fac.id}>
+                                        {fac.codigo ? `${fac.codigo} — ` : ''}{fac.nombre}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
 
-                {/* --- BARRA DE BÚSQUEDA FLOTANTE --- */}
-                <Paper
-                    elevation={0}
-                    sx={{
-                        p: 2.5,
-                        mb: 3,
-                        borderRadius: 3,
-                        backgroundColor: '#ffffff',
-                        boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
-                        border: '1px solid #f1f5f9',
-                        display: 'flex',
-                        flexDirection: { xs: 'column', md: 'row' },
-                        justifyContent: 'space-between',
-                        alignItems: { xs: 'stretch', md: 'center' },
-                        gap: 2,
-                    }}
-                >
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, alignItems: 'center', flex: 1 }}>
-                        <TextField
-                            placeholder="Buscar especialidad por código o nombre..."
-                            size="small"
-                            value={busqueda}
-                            onChange={(e) => {
-                                setBusqueda(e.target.value);
-                                setPagina(0);
-                            }}
-                            onKeyDown={(e) => e.key === 'Enter' && cargarDatos()}
-                            sx={{ 
-                                width: { xs: '100%', sm: 400 },
-                                '& .MuiOutlinedInput-root': { borderRadius: 2.5, backgroundColor: '#f8fafc' }
-                            }}
-                            InputProps={{
-                                startAdornment: (
-                                    <InputAdornment position="start">
-                                        <Search size={18} color="#94a3b8" />
-                                    </InputAdornment>
-                                ),
-                            }}
-                        />
-
-                        <FormControlLabel
-                            control={
-                                <Checkbox
-                                    size="small"
-                                    checked={soloActivos}
-                                    onChange={(e) => {
-                                        setSoloActivos(e.target.checked);
-                                        setPagina(0);
-                                    }}
-                                    sx={{ color: THEME_COLORS.primary, '&.Mui-checked': { color: THEME_COLORS.primary } }}
+                    <div className="col-12 col-md-5">
+                        <div className="premium-input-group">
+                            <label className="filter-label"><Search size={14} /> Buscar Especialidad</label>
+                            <div className="position-relative">
+                                <input 
+                                    type="text" 
+                                    className="form-control" 
+                                    style={{ paddingLeft: '2.5rem' }}
+                                    placeholder="Buscar por código o nombre..."
+                                    value={busqueda}
+                                    onChange={(e) => setBusqueda(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && setBusquedaAplicada(busqueda)}
                                 />
-                            }
-                            label={
-                                <Typography variant="body2" sx={{ color: THEME_COLORS.textPrimary, fontWeight: 600 }}>
-                                    Solo especialidades activas
-                                </Typography>
-                            }
-                        />
-                    </Box>
+                                <Search size={16} className="position-absolute text-muted" style={{ left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
+                            </div>
+                        </div>
+                    </div>
 
-                    <Box sx={{ display: 'flex', gap: 1.5 }}>
-                        <Button
-                            variant="outlined"
-                            startIcon={<Search size={16} />}
-                            onClick={() => { setPagina(0); cargarDatos(); }}
-                            sx={{ textTransform: 'none', borderRadius: 2, fontWeight: 600, px: 2 }}
-                        >
-                            Buscar
-                        </Button>
-                        <Button
-                            variant="text"
-                            startIcon={<RefreshCw size={16} />}
+                    <div className="col-12 col-md-3 d-flex gap-2">
+                        <button type="button" className="btn btn-light border text-muted fw-medium d-flex align-items-center justify-content-center gap-2 w-100" 
                             onClick={() => {
                                 setBusqueda('');
-                                setSoloActivos(false);
+                                setBusquedaAplicada('');
                                 setPagina(0);
-                                cargarDatos();
                             }}
-                            sx={{ textTransform: 'none', borderRadius: 2, fontWeight: 600, color: '#64748b' }}
                         >
-                            Limpiar
-                        </Button>
-                    </Box>
-                </Paper>
+                            <RefreshCcw size={16} /> Limpiar
+                        </button>
+                        <button type="button" className="btn btn-premium-accent d-flex align-items-center justify-content-center gap-2 w-100"
+                            onClick={() => {
+                                setBusquedaAplicada(busqueda);
+                                setPagina(0);
+                            }}
+                        >
+                            <Filter size={16} /> Filtrar
+                        </button>
+                    </div>
 
-                {/* --- TABLA PRINCIPAL AGRUPADA --- */}
-                <TableContainer 
-                    component={Paper} 
-                    elevation={0} 
-                    sx={{ 
-                        borderRadius: 3, 
-                        border: '1px solid #f1f5f9',
-                        boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
-                        overflow: 'hidden'
-                    }}
-                >
-                    <Table sx={{ minWidth: 900 }}>
-                        <TableHead sx={{ backgroundColor: '#f8fafc' }}>
-                            <TableRow>
-                                <TableCell sx={{ fontWeight: 700, color: '#64748b', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', py: 2, width: '10%' }}>Cód.</TableCell>
-                                <TableCell sx={{ fontWeight: 700, color: '#64748b', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', width: '30%' }}>Especialidad</TableCell>
-                                <TableCell sx={{ fontWeight: 700, color: '#64748b', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', width: '10%' }}>Estado</TableCell>
-                                <TableCell sx={{ fontWeight: 700, color: '#64748b', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', width: '50%' }}>Secciones Operativas</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {cargando ? (
-                                <TableRow>
-                                    <TableCell colSpan={4} align="center" sx={{ py: 8 }}>
-                                        <CircularProgress size={32} thickness={5} sx={{ color: THEME_COLORS.primary }} />
-                                    </TableCell>
-                                </TableRow>
-                            ) : carrerasPaginadas.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={4} align="center" sx={{ py: 8, color: '#94a3b8' }}>
-                                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-                                            <Box sx={{ p: 2, borderRadius: '50%', backgroundColor: '#f1f5f9', display: 'inline-flex' }}>
-                                                <Layers size={32} color="#cbd5e1" />
-                                            </Box>
-                                            <Typography variant="body1" sx={{ fontWeight: 600, color: '#475569', mt: 1 }}>No se encontraron especialidades</Typography>
-                                            <Typography variant="body2">Ajusta tu búsqueda o crea un nuevo registro en el módulo de Especialidades.</Typography>
-                                        </Box>
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                carrerasPaginadas.map((carrera) => (
-                                    <TableRow hover key={carrera.codigo} sx={{ '& td': { borderColor: '#f1f5f9' }, transition: 'backgroundColor 0.2s' }}>
-                                        <TableCell>
-                                            <Stack direction="row" alignItems="center" spacing={1}>
-                                                <Box sx={{ backgroundColor: '#f0f9ff', p: 0.5, borderRadius: 1.5, color: THEME_COLORS.primary }}>
-                                                    <Bookmark size={16} />
-                                                </Box>
-                                                <Typography variant="body2" sx={{ fontWeight: 800, color: '#334155' }}>
-                                                    {carrera.codigo}
-                                                </Typography>
-                                            </Stack>
-                                        </TableCell>
+                </div>
+            </div>
 
-                                        <TableCell>
-                                            <Typography variant="body2" sx={{ fontWeight: 700, color: '#475569' }}>
-                                                {carrera.nombre}
-                                            </Typography>
-                                        </TableCell>
-
-                                        <TableCell>
-                                            <Chip
-                                                label={carrera.estado}
-                                                size="small"
-                                                sx={{
-                                                    fontWeight: 800,
-                                                    fontSize: '0.7rem',
-                                                    letterSpacing: '0.5px',
-                                                    borderRadius: '8px',
-                                                    px: 1,
-                                                    backgroundColor: String(carrera.estado).toUpperCase() === 'ACTIVO' ? '#dcfce7' : '#fee2e2',
-                                                    color: String(carrera.estado).toUpperCase() === 'ACTIVO' ? '#166534' : '#991b1b',
-                                                }}
-                                            />
-                                        </TableCell>
-
-                                        <TableCell>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
-                                                
-                                                {/* Botón "+ Nueva" integrado en la fila de la especialidad */}
-                                                <Button
-                                                    type="button"
-                                                    size="small"
-                                                    startIcon={<Plus size={14} />}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        abrirNuevaSeccion(carrera);
-                                                    }}
-                                                    sx={{
-                                                        backgroundColor: '#f59e0b',
-                                                        color: '#ffffff',
-                                                        '&:hover': { backgroundColor: '#d97706' },
-                                                        textTransform: 'none',
-                                                        fontWeight: 800,
-                                                        fontSize: '0.72rem',
-                                                        px: 1.2,
-                                                        py: 0.35,
-                                                        borderRadius: '6px',
-                                                        boxShadow: 'none',
-                                                        minHeight: 28,
-                                                        mr: 0.5
+            {/* Tabla Principal Agrupada */}
+            <div className="premium-card overflow-hidden">
+                {cargando ? (
+                    <div className="text-center py-5">
+                        <div className="spinner-border text-teal-600" role="status" style={{ color: 'var(--teal-600)' }}></div>
+                    </div>
+                ) : especialidadesPaginadas.length === 0 ? (
+                    <div className="text-center py-5" style={{ minHeight: '300px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+                        <div className="bg-light rounded-circle d-flex align-items-center justify-content-center mb-3" style={{ width: '80px', height: '80px' }}>
+                            <Layers size={36} className="text-muted opacity-50" />
+                        </div>
+                        <h5 className="fw-bold" style={{ color: 'var(--slate-800)' }}>No se encontraron especialidades</h5>
+                        <p className="text-muted mb-0" style={{ maxWidth: '400px' }}>
+                            La facultad seleccionada no cuenta con especialidades registradas o no coinciden con la búsqueda.
+                        </p>
+                    </div>
+                ) : (
+                    <>
+                        <div className="table-responsive">
+                            <table className="table premium-table">
+                                <thead>
+                                    <tr>
+                                        <th className="ps-4" style={{ width: '15%' }}>Código</th>
+                                        <th style={{ width: '30%' }}>Especialidad</th>
+                                        <th className="text-center" style={{ width: '15%' }}>Estado</th>
+                                        <th className="text-start pe-4" style={{ width: '40%' }}>Secciones Operativas</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {especialidadesPaginadas.map((esp) => (
+                                        <tr key={esp.codigo}>
+                                            <td className="ps-4">
+                                                <div className="d-flex align-items-center gap-2">
+                                                    <div className="bg-light p-1 rounded text-primary">
+                                                        <Bookmark size={16} />
+                                                    </div>
+                                                    <span className="fw-bold text-primary" style={{ fontSize: '0.95rem' }}>
+                                                        {esp.codigo}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div className="fw-semibold text-dark" style={{ fontSize: '0.9rem' }}>
+                                                    {esp.nombre}
+                                                </div>
+                                            </td>
+                                            <td className="text-center">
+                                                <span 
+                                                    className="badge px-3 py-1 rounded-pill" 
+                                                    style={{ 
+                                                        fontSize: '0.75rem', 
+                                                        letterSpacing: '0.5px', 
+                                                        fontWeight: 700,
+                                                        backgroundColor: esp.estado === 'ACTIVO' ? '#dcfce7' : '#fee2e2',
+                                                        color: esp.estado === 'ACTIVO' ? '#166534' : '#991b1b'
                                                     }}
                                                 >
-                                                    Nueva
-                                                </Button>
+                                                    {esp.estado}
+                                                </span>
+                                            </td>
+                                            <td className="pe-4">
+                                                <div className="d-flex align-items-center flex-wrap gap-2">
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-sm btn-warning text-white fw-bold d-flex align-items-center gap-1 px-2 py-1"
+                                                        style={{ fontSize: '0.75rem', borderRadius: '6px' }}
+                                                        onClick={() => abrirNuevaSeccion(esp)}
+                                                    >
+                                                        <Plus size={14} /> Nueva
+                                                    </button>
 
-                                                {/* Pastillas celestes de secciones con botón X */}
-                                                {(carrera.secciones || []).map((sec) => {
-                                                    const codigoSec = typeof sec === 'string' ? sec : sec.codigo;
-                                                    return (
-                                                        <Box
-                                                            key={codigoSec}
-                                                            sx={{
-                                                                display: 'inline-flex',
-                                                                alignItems: 'stretch',
-                                                                height: 28,
-                                                                borderRadius: '6px',
-                                                                overflow: 'hidden',
-                                                                border: '1px solid #e0f2fe'
-                                                            }}
-                                                        >
-                                                            <Box
-                                                                sx={{
-                                                                    backgroundColor: '#38bdf8',
-                                                                    color: '#ffffff',
-                                                                    fontWeight: 800,
-                                                                    fontSize: '0.75rem',
-                                                                    px: 1.8,
-                                                                    display: 'flex',
-                                                                    alignItems: 'center',
-                                                                    justifyContent: 'center',
-                                                                    letterSpacing: 0.5
-                                                                }}
+                                                    {(esp.secciones || []).map((sec) => {
+                                                        const codigoSec = typeof sec === 'string' ? sec : sec.codigo;
+                                                        return (
+                                                            <div 
+                                                                key={codigoSec}
+                                                                className="d-inline-flex align-items-stretch overflow-hidden border border-info rounded"
+                                                                style={{ height: '28px' }}
                                                             >
-                                                                {codigoSec}
-                                                            </Box>
-                                                            <Tooltip title={`Eliminar sección ${codigoSec}`}>
-                                                                <Box
-                                                                    component="button"
-                                                                    type="button"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        setSeccionAEliminar({
-                                                                            especialidad_codigo: carrera.codigo,
-                                                                            especialidad_nombre: carrera.nombre,
-                                                                            codigo: codigoSec
-                                                                        });
-                                                                    }}
-                                                                    sx={{
-                                                                        backgroundColor: '#ef4444',
-                                                                        border: 'none',
-                                                                        cursor: 'pointer',
-                                                                        display: 'flex',
-                                                                        alignItems: 'center',
-                                                                        justifyContent: 'center',
-                                                                        px: 0.8,
-                                                                        color: '#ffffff',
-                                                                        transition: '0.2s',
-                                                                        '&:hover': { backgroundColor: '#b91c1c' }
-                                                                    }}
+                                                                <span 
+                                                                    className="bg-info text-white fw-bold px-2 d-flex align-items-center justify-content-center"
+                                                                    style={{ fontSize: '0.75rem' }}
                                                                 >
-                                                                    <X size={14} strokeWidth={3} />
-                                                                </Box>
-                                                            </Tooltip>
-                                                        </Box>
-                                                    );
-                                                })}
-                                            </Box>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                    
-                    <Box sx={{ borderTop: '1px solid #f1f5f9', backgroundColor: '#fcfcfc' }}>
-                        <TablePagination
-                            component="div"
-                            count={carrerasAgrupadas.length}
-                            page={pagina}
-                            onPageChange={(e, newPage) => setPagina(newPage)}
-                            rowsPerPage={filasPorPagina}
-                            onRowsPerPageChange={(e) => {
-                                setFilasPorPagina(parseInt(e.target.value, 10));
-                                setPagina(0);
-                            }}
-                            labelRowsPerPage="Especialidades por página:"
-                        />
-                    </Box>
-                </TableContainer>
+                                                                    {codigoSec}
+                                                                </span>
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn btn-danger btn-sm rounded-0 border-0 d-flex align-items-center justify-content-center px-1"
+                                                                    title={`Eliminar sección ${codigoSec}`}
+                                                                    onClick={() => setSeccionAEliminar({
+                                                                        especialidad_codigo: esp.codigo,
+                                                                        especialidad_nombre: esp.nombre,
+                                                                        codigo: codigoSec
+                                                                    })}
+                                                                >
+                                                                    <X size={12} strokeWidth={3} />
+                                                                </button>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
 
-                {/* --- MODAL DE REGISTRO DE SECCIÓN (DISEÑO PREMIUM) --- */}
-                <Dialog
-                    open={modalAbierto}
-                    onClose={cerrarModal}
-                    fullWidth
-                    maxWidth="sm"
-                    PaperProps={{ sx: { borderRadius: 4, boxShadow: '0 24px 48px rgba(0,0,0,0.1)' } }}
-                >
-                    <Box component="form" onSubmit={guardarSeccion}>
-                        {/* Cabecera del Modal */}
-                        <DialogTitle sx={{ p: 3, pb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <Stack direction="row" spacing={2} alignItems="center">
-                                <Box sx={{ backgroundColor: '#f0f9ff', color: THEME_COLORS.primary, p: 1.5, borderRadius: 3, display: 'flex' }}>
-                                    <Layers size={24} />
-                                </Box>
-                                <Box>
-                                    <Typography variant="h6" sx={{ fontWeight: 800, color: '#1e293b', lineHeight: 1.2 }}>
-                                        Añadir Nueva Sección
-                                    </Typography>
-                                    <Typography variant="body2" sx={{ color: '#64748b', mt: 0.5 }}>
-                                        Complete la información para habilitar el grupo.
-                                    </Typography>
-                                </Box>
-                            </Stack>
-                            <IconButton onClick={cerrarModal} size="small" sx={{ backgroundColor: '#f1f5f9', '&:hover':{backgroundColor:'#e2e8f0'} }}>
-                                <X size={20} color="#64748b" />
-                            </IconButton>
-                        </DialogTitle>
-
-                        <DialogContent sx={{ px: 3, pb: 4, pt: '10px !important' }}>
-                            
-                            {/* Banner Informativo de la Especialidad */}
-                            <Paper 
-                                elevation={0} 
-                                sx={{ 
-                                    p: 2, 
-                                    mb: 3, 
-                                    borderRadius: 3, 
-                                    backgroundColor: '#f8fafc', 
-                                    border: '1px solid #e2e8f0', 
-                                    display: 'flex', 
-                                    alignItems: 'center', 
-                                    gap: 1.5 
-                                }}
-                            >
-                                <Box sx={{ p: 1, borderRadius: 2, backgroundColor: '#ffffff', color: '#64748b', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
-                                    <Bookmark size={20} />
-                                </Box>
-                                <Box>
-                                    <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                                        Programa de Estudio Seleccionado
-                                    </Typography>
-                                    <Typography variant="body2" sx={{ color: '#334155', fontWeight: 700, fontSize: '0.9rem' }}>
-                                        {carreraSeleccionada?.codigo} — {carreraSeleccionada?.nombre}
-                                    </Typography>
-                                </Box>
-                            </Paper>
-
-                            {/* Campos del Formulario */}
-                            <Grid container spacing={3}>
-                                <Grid item xs={12} sm={12}>
-                                    <Typography variant="body2" sx={{ fontWeight: 700, mb: 1, color: '#475569' }}>
-                                        Código de Sección <span style={{color: '#ef4444'}}>*</span>
-                                    </Typography>
-                                    <TextField
-                                        fullWidth
-                                        required
-                                        placeholder="Ej. A, B, UNICA"
-                                        size="medium"
-                                        value={formulario.codigo}
-                                        onChange={(e) => actualizarCampo('codigo', e.target.value.toUpperCase())}
-                                        sx={inputStyle}
-                                        InputProps={{
-                                            startAdornment: (
-                                                <InputAdornment position="start">
-                                                    <Hash size={18} color="#94a3b8" />
-                                                </InputAdornment>
-                                            ),
+                        {/* Footer Paginación */}
+                        {especialidadesFiltradas.length > 0 && (
+                            <div className="d-flex flex-column flex-sm-row justify-content-between align-items-center p-3 border-top bg-light bg-opacity-50 gap-3">
+                                <div className="d-flex align-items-center gap-2">
+                                    <span className="text-muted small fw-medium">Especialidades por página:</span>
+                                    <select 
+                                        className="form-select form-select-sm border-0 bg-transparent fw-bold" 
+                                        style={{ width: '70px', cursor: 'pointer' }}
+                                        value={filasPorPagina} 
+                                        onChange={(e) => {
+                                            setFilasPorPagina(parseInt(e.target.value, 10));
+                                            setPagina(0);
                                         }}
-                                    />
-                                </Grid>
-
-                                <Grid item xs={12} sm={12}>
-                                    <Typography variant="body2" sx={{ fontWeight: 700, mb: 1, color: '#475569' }}>
-                                        Estado Operativo <span style={{color: '#ef4444'}}>*</span>
-                                    </Typography>
-                                    <TextField
-                                        select
-                                        fullWidth
-                                        required
-                                        size="medium"
-                                        value={formulario.estado}
-                                        onChange={(e) => actualizarCampo('estado', e.target.value)}
-                                        sx={inputStyle}
                                     >
-                                        <MenuItem value="ACTIVO">
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                                                <Box sx={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#22c55e' }} />
-                                                <Typography variant="body2" sx={{ fontWeight: 600 }}>ACTIVO</Typography>
-                                            </Box>
-                                        </MenuItem>
-                                        <MenuItem value="INACTIVO">
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                                                <Box sx={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#ef4444' }} />
-                                                <Typography variant="body2" sx={{ fontWeight: 600 }}>INACTIVO</Typography>
-                                            </Box>
-                                        </MenuItem>
-                                    </TextField>
-                                </Grid>
+                                        <option value={5}>5</option>
+                                        <option value={10}>10</option>
+                                        <option value={20}>20</option>
+                                        <option value={50}>50</option>
+                                    </select>
+                                </div>
+                                <span className="text-muted small fw-medium">
+                                    Mostrando {pagina * filasPorPagina + 1} a {Math.min((pagina + 1) * filasPorPagina, especialidadesFiltradas.length)} de {especialidadesFiltradas.length} registros
+                                </span>
+                                <div className="d-flex gap-1">
+                                    <button 
+                                        className="btn btn-sm btn-white border shadow-sm" 
+                                        onClick={() => setPagina(p => Math.max(0, p - 1))}
+                                        disabled={pagina === 0}
+                                    >
+                                        <ChevronLeft size={16} />
+                                    </button>
+                                    <button 
+                                        className="btn btn-sm btn-white border shadow-sm" 
+                                        onClick={() => setPagina(p => Math.min(totalPaginas - 1, p + 1))}
+                                        disabled={pagina >= totalPaginas - 1}
+                                    >
+                                        <ChevronRight size={16} />
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </>
+                )}
+            </div>
 
-                                <Grid item xs={12}>
-                                    <Typography variant="body2" sx={{ fontWeight: 700, mb: 1, color: '#475569' }}>
-                                        Nombre Descriptivo <span style={{color: '#94a3b8', fontWeight: 500}}>(Opcional)</span>
-                                    </Typography>
-                                    <TextField
-                                        fullWidth
-                                        placeholder="Ej. SECCIÓN A - TURNO MAÑANA"
-                                        size="medium"
-                                        value={formulario.nombre}
-                                        onChange={(e) => actualizarCampo('nombre', e.target.value)}
-                                        sx={inputStyle}
-                                        InputProps={{
-                                            startAdornment: (
-                                                <InputAdornment position="start">
-                                                    <AlignLeft size={18} color="#94a3b8" />
-                                                </InputAdornment>
-                                            ),
-                                        }}
-                                    />
-                                </Grid>
-                            </Grid>
-                        </DialogContent>
+            {/* MODAL CREAR SECCIÓN */}
+            {modalAbierto && (
+                <>
+                    <div className="modal fade show d-block" tabIndex="-1" style={{ zIndex: 1055 }}>
+                        <div className="modal-dialog modal-dialog-centered">
+                            <div className="modal-content premium-modal">
+                                
+                                <div className="modal-header d-flex justify-content-between align-items-center">
+                                    <div className="d-flex align-items-center gap-3">
+                                        <div className="bg-white bg-opacity-10 p-2 rounded-3">
+                                            <Layers size={24} className="text-white" />
+                                        </div>
+                                        <div>
+                                            <h5 className="modal-title fw-bold mb-0 text-white">
+                                                Añadir Nueva Sección
+                                            </h5>
+                                            <small className="text-white-50">Habilitar grupo operativo</small>
+                                        </div>
+                                    </div>
+                                    <button type="button" className="btn-close btn-close-white" onClick={cerrarModal}></button>
+                                </div>
 
-                        {/* Acciones del Modal */}
-                        <DialogActions sx={{ p: 3, pt: 0, gap: 1.5, borderTop: '1px solid #f1f5f9', mt: 1 }}>
-                            <Button
-                                type="button"
-                                onClick={cerrarModal}
-                                disabled={guardando}
-                                sx={{ color: '#64748b', fontWeight: 700, textTransform: 'none', px: 3, '&:hover':{backgroundColor: '#f1f5f9'} }}
-                            >
-                                Cancelar
-                            </Button>
-                            <Button
-                                type="submit"
-                                variant="contained"
-                                disabled={guardando}
-                                sx={{
-                                    backgroundColor: THEME_COLORS.primary,
-                                    borderRadius: 2.5,
-                                    px: 4,
-                                    py: 1,
-                                    textTransform: 'none',
-                                    fontWeight: 700,
-                                    boxShadow: '0 4px 14px rgba(2, 132, 199, 0.3)',
-                                    '&:hover': { backgroundColor: THEME_COLORS.primaryHover },
-                                }}
-                            >
-                                {guardando ? 'Guardando...' : 'Crear y Asignar'}
-                            </Button>
-                        </DialogActions>
-                    </Box>
-                </Dialog>
+                                <div className="modal-body p-4">
+                                    <div className="alert alert-light border mb-3 rounded-3 d-flex align-items-center gap-2">
+                                        <Bookmark size={18} className="text-primary" />
+                                        <div className="small">
+                                            <strong>Especialidad:</strong> {especialidadSeleccionada?.codigo} — {especialidadSeleccionada?.nombre}
+                                        </div>
+                                    </div>
 
-                {/* --- MODAL DE CONFIRMACIÓN DE ELIMINACIÓN --- */}
-                <Dialog
-                    open={Boolean(seccionAEliminar)}
-                    onClose={() => !eliminando && setSeccionAEliminar(null)}
-                    maxWidth="xs"
-                    fullWidth
-                    PaperProps={{ sx: { borderRadius: 4, boxShadow: '0 20px 40px rgba(0,0,0,0.1)' } }}
-                >
-                    <DialogTitle sx={{ p: 3, pb: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5 }}>
-                        <Box sx={{ backgroundColor: '#fef2f2', color: '#ef4444', p: 2, borderRadius: '50%', display: 'flex' }}>
-                            <AlertTriangle size={32} />
-                        </Box>
-                        <Typography variant="h6" sx={{ fontWeight: 800, textAlign: 'center', color: '#1e293b' }}>
-                            ¿Eliminar Sección?
-                        </Typography>
-                    </DialogTitle>
-                    <DialogContent sx={{ px: 4, pb: 3 }}>
-                        <Typography variant="body1" sx={{ color: '#475569', textAlign: 'center', lineHeight: 1.5 }}>
-                            Se desvinculará la sección <strong style={{color: '#000'}}>{seccionAEliminar?.codigo}</strong> de la especialidad <strong style={{color: '#000'}}>{seccionAEliminar?.especialidad_nombre}</strong>. Esta acción no se puede deshacer.
-                        </Typography>
-                    </DialogContent>
-                    <DialogActions sx={{ p: 3, pt: 0, justifyContent: 'center', gap: 2 }}>
-                        <Button
-                            type="button"
-                            onClick={() => setSeccionAEliminar(null)}
-                            disabled={eliminando}
-                            sx={{ color: '#64748b', fontWeight: 700, textTransform: 'none', px: 3, '&:hover':{backgroundColor: '#f1f5f9'} }}
-                        >
-                            Cancelar
-                        </Button>
-                        <Button
-                            type="button"
-                            onClick={confirmarEliminacion}
-                            variant="contained"
-                            disabled={eliminando}
-                            sx={{
-                                backgroundColor: '#ef4444',
-                                '&:hover': { backgroundColor: '#dc2626' },
-                                borderRadius: 2.5,
-                                textTransform: 'none',
-                                fontWeight: 700,
-                                px: 4,
-                                py: 1,
-                                boxShadow: '0 4px 14px rgba(239, 68, 68, 0.3)',
-                            }}
-                        >
-                            {eliminando ? 'Eliminando...' : 'Sí, Eliminar'}
-                        </Button>
-                    </DialogActions>
-                </Dialog>
-            </Container>
-        </Fade>
+                                    <form id="form-seccion" onSubmit={guardarSeccion}>
+                                        <div className="row g-3">
+                                            <div className="col-md-6">
+                                                <div className="premium-input-group">
+                                                    <label className="filter-label">Código de Sección <span className="text-danger ms-1">*</span></label>
+                                                    <input 
+                                                        type="text" 
+                                                        className="form-control text-uppercase" 
+                                                        name="codigo"
+                                                        placeholder="Ej. A, B" 
+                                                        value={formulario.codigo} 
+                                                        onChange={(e) => actualizarCampo({ target: { name: 'codigo', value: e.target.value.toUpperCase() } })}
+                                                        required 
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="col-md-6">
+                                                <div className="premium-input-group">
+                                                    <label className="filter-label">Estado Operativo <span className="text-danger ms-1">*</span></label>
+                                                    <select className="form-select" name="estado" value={formulario.estado} onChange={actualizarCampo} required>
+                                                        <option value="ACTIVO">ACTIVO</option>
+                                                        <option value="INACTIVO">INACTIVO</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div className="col-12">
+                                                <div className="premium-input-group">
+                                                    <label className="filter-label">Nombre Descriptivo (Opcional)</label>
+                                                    <input 
+                                                        type="text" 
+                                                        className="form-control" 
+                                                        name="nombre"
+                                                        placeholder="Ej. SECCIÓN A - TURNO MAÑANA" 
+                                                        value={formulario.nombre} 
+                                                        onChange={actualizarCampo} 
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+
+                                <div className="modal-footer d-flex justify-content-end gap-2">
+                                    <button type="button" className="btn btn-light fw-medium px-4" onClick={cerrarModal} disabled={guardando}>
+                                        Cancelar
+                                    </button>
+                                    <button type="submit" form="form-seccion" className="btn btn-premium-accent fw-medium px-4" disabled={guardando}>
+                                        {guardando ? 'Guardando...' : 'Crear y Asignar'}
+                                    </button>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                    <div className="modal-backdrop fade show" style={{ backgroundColor: '#0f172a', opacity: 0.6 }}></div>
+                </>
+            )}
+
+            {/* MODAL CONFIRMACIÓN ELIMINACIÓN */}
+            {seccionAEliminar && (
+                <>
+                    <div className="modal fade show d-block" tabIndex="-1" style={{ zIndex: 1055 }}>
+                        <div className="modal-dialog modal-dialog-centered modal-sm">
+                            <div className="modal-content premium-modal modal-danger">
+                                <div className="modal-body p-4 text-center">
+                                    <div className="bg-danger bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style={{ width: '64px', height: '64px' }}>
+                                        <AlertTriangle size={32} className="text-danger" />
+                                    </div>
+                                    <h5 className="fw-bold text-dark mb-2">¿Eliminar Sección?</h5>
+                                    <p className="text-muted small mb-0">
+                                        Se desvinculará la sección <strong className="text-dark">{seccionAEliminar.codigo}</strong> de la especialidad <strong className="text-dark">{seccionAEliminar.especialidad_nombre}</strong>. Esta acción no se puede deshacer.
+                                    </p>
+                                </div>
+                                <div className="modal-footer bg-light border-top d-flex flex-nowrap p-0">
+                                    <button type="button" className="btn btn-link text-muted fw-semibold text-decoration-none w-50 py-3 border-end m-0 rounded-0" onClick={() => setSeccionAEliminar(null)} disabled={eliminando}>
+                                        Cancelar
+                                    </button>
+                                    <button type="button" className="btn btn-link text-danger fw-bold text-decoration-none w-50 py-3 m-0 rounded-0" onClick={confirmarEliminacion} disabled={eliminando}>
+                                        {eliminando ? 'Eliminando...' : 'Sí, Eliminar'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="modal-backdrop fade show" style={{ backgroundColor: '#0f172a', opacity: 0.6 }}></div>
+                </>
+            )}
+
+        </div>
     );
 }
