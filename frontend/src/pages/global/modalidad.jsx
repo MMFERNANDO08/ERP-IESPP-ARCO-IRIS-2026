@@ -334,194 +334,29 @@ export default function GestionModalidades() {
                         </div>
                     </div>
 
-<<<<<<< HEAD
-                {/* TABLA DE DATOS */}
-                <TableContainer component={Paper} elevation={0} sx={{ border: `1px solid ${COLORS.border}`, borderRadius: 2 }}>
-                    <Table>
-                        <TableHead sx={{ backgroundColor: COLORS.tableHead }}>
-                            <TableRow>
-                                <TableCell sx={{ fontWeight: 700, color: COLORS.textSecondary, fontSize: '0.75rem', letterSpacing: '0.05em' }}>CÓDIGO</TableCell>
-                                <TableCell sx={{ fontWeight: 700, color: COLORS.textSecondary, fontSize: '0.75rem', letterSpacing: '0.05em' }}>MODALIDAD</TableCell>
-                                <TableCell sx={{ fontWeight: 700, color: COLORS.textSecondary, fontSize: '0.75rem', letterSpacing: '0.05em' }}>DESCRIPCIÓN</TableCell>
-                                <TableCell align="center" sx={{ fontWeight: 700, color: COLORS.textSecondary, fontSize: '0.75rem', letterSpacing: '0.05em' }}>ESTADO</TableCell>
-                                <TableCell align="center" sx={{ fontWeight: 700, color: COLORS.textSecondary, fontSize: '0.75rem', letterSpacing: '0.05em' }}>ACCIONES</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {cargando ? (
-                                <TableRow>
-                                    <TableCell colSpan={5} align="center" sx={{ py: 5 }}>
-                                        <CircularProgress size={30} sx={{ color: COLORS.primary }} />
-                                    </TableCell>
-                                </TableRow>
-                            ) : modalidadesFiltradas.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={5} align="center" sx={{ py: 5, color: COLORS.textSecondary }}>
-                                        No se encontraron modalidades registradas.
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                modalidadesFiltradas.map((mod) => (
-                                    <TableRow key={mod.id} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                                        <TableCell sx={{ fontWeight: 600, color: COLORS.textPrimary }}>{mod.codigo}</TableCell>
-                                        <TableCell sx={{ color: COLORS.textPrimary }}>{mod.nombre}</TableCell>
-                                        <TableCell sx={{ color: COLORS.textSecondary }}>{mod.descripcion || '—'}</TableCell>
-                                        <TableCell align="center">
-                                            <Chip
-                                                label={mod.estado}
-                                                size="small"
-                                                sx={{
-                                                    fontWeight: 700,
-                                                    fontSize: '0.7rem',
-                                                    backgroundColor: mod.estado === 'ACTIVO' ? '#dcfce7' : '#fee2e2',
-                                                    color: mod.estado === 'ACTIVO' ? '#166534' : '#991b1b',
-                                                    borderRadius: 1
-                                                }}
-                                            />
-                                        </TableCell>
-                                        <TableCell align="center">
-                                            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
-                                                <Tooltip title="Editar">
-                                                    <IconButton 
-                                                        onClick={() => handleEditar(mod)} 
-                                                        size="small" 
-                                                        sx={{ color: COLORS.primary, backgroundColor: COLORS.bgIcon, borderRadius: 1.5, '&:hover': { backgroundColor: '#dbeafe' } }}
-                                                    >
-                                                        <Pencil size={16} />
-                                                    </IconButton>
-                                                </Tooltip>
-                                                <Tooltip title="Eliminar">
-                                                    <IconButton 
-                                                        onClick={() => setModalidadAEliminar(mod)} 
-                                                        size="small" 
-                                                        sx={{ color: '#dc2626', backgroundColor: '#fef2f2', borderRadius: 1.5, '&:hover': { backgroundColor: '#fee2e2' } }}
-                                                    >
-                                                        <Trash2 size={16} />
-                                                    </IconButton>
-                                                </Tooltip>
-                                            </Box>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-
-                {/* MODAL DE CREAR / EDITAR (Mismo código de antes) */}
-                <Dialog open={modalAbierto} onClose={() => setModalAbierto(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
-                    <form onSubmit={handleGuardar}>
-                        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${COLORS.border}`, p: 2.5 }}>
-                            <Typography variant="h6" sx={{ fontWeight: 700, color: COLORS.textPrimary }}>
-                                {editandoId ? 'Editar Modalidad' : 'Nueva Modalidad'}
-                            </Typography>
-                            <IconButton onClick={() => setModalAbierto(false)} size="small"><X size={18} /></IconButton>
-                        </DialogTitle>
-                        
-                        <DialogContent sx={{ p: 3 }}>
-                            <Grid container spacing={2.5}>
-                                <Grid item xs={12} sm={6} sx={{ mt: 2, mb: 2 }}>
-                                    <TextField
-                                        fullWidth required label="Código" size="small"
-                                        value={formulario.codigo}
-                                        onChange={(e) => actualizarCampo('codigo', e.target.value)}
-                                        placeholder="Ej. MOD-01"
-                                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                                    />
-                                </Grid>
-                            
-                                <Grid item xs={12} sm={6} sx={{ mt: 2, mb: 2 }}>
-                                    <TextField
-                                        select fullWidth required label="Modalidad" size="small"
-                                        value={formulario.nombre}
-                                        onChange={(e) => actualizarCampo('nombre', e.target.value)}
-                                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                                    >
-                                        <MenuItem value="PRESENCIAL">PRESENCIAL</MenuItem>
-                                        <MenuItem value="SEMIPRESENCIAL">SEMIPRESENCIAL</MenuItem>
-                                        <MenuItem value="VIRTUAL">A DISTANCIA</MenuItem>
-                                    </TextField>
-                                </Grid>
-                            </Grid>
-
-                            <Grid item xs={12} sm={6} sx={{ mt: 2, mb: 2 }}>
-                                <Grid item xs={12}>
-                                    <TextField
-                                        fullWidth label="Descripción" size="small" multiline rows={3}
-                                        value={formulario.descripcion}
-                                        onChange={(e) => actualizarCampo('descripcion', e.target.value)}
-                                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                                    />
-                                </Grid>
-                            </Grid>
-
-                            <Grid item xs={12} sm={6} sx={{ mt: 2, mb: 2 }}>
-                                <Grid item xs={12} sm={6}>
-                                    <TextField
-                                        select fullWidth required label="Estado" size="small"
-                                        value={formulario.estado}
-                                        onChange={(e) => actualizarCampo('estado', e.target.value)}
-                                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-                                    >
-                                        <MenuItem value="ACTIVO">ACTIVO</MenuItem>
-                                        <MenuItem value="INACTIVO">INACTIVO</MenuItem>
-                                    </TextField>
-                                </Grid>
-                            </Grid>
-                        </DialogContent>
-
-                        <DialogActions sx={{ p: 2.5, borderTop: `1px solid ${COLORS.border}`, gap: 1 }}>
-                            <Button onClick={() => setModalAbierto(false)} sx={{ color: COLORS.textSecondary, textTransform: 'none', fontWeight: 600 }}>
-                                Cancelar
-                            </Button>
-                            <Button 
-                                type="submit" 
-                                variant="contained" 
-                                startIcon={<Check size={18} />}
-                                sx={{ backgroundColor: COLORS.primary, fontWeight: 600, textTransform: 'none', borderRadius: 2, px: 3 }}
-                            >
-                                Guardar
-                            </Button>
-                        </DialogActions>
-                    </form>
-                </Dialog>
-
-                {/* MODAL DE ELIMINACIÓN (Mismo código de antes) */}
-                <Dialog open={Boolean(modalidadAEliminar)} onClose={() => setModalidadAEliminar(null)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
-                    <DialogTitle sx={{ fontWeight: 700 }}>Confirmar Eliminación</DialogTitle>
-                    <DialogContent>
-                        <Typography variant="body2" sx={{ color: COLORS.textSecondary }}>
-                            ¿Estás seguro de que deseas eliminar la modalidad <strong>{modalidadAEliminar?.nombre}</strong>? Esta acción no se puede deshacer.
-                        </Typography>
-                    </DialogContent>
-                    <DialogActions sx={{ p: 2.5, borderTop: `1px solid ${COLORS.border}`, gap: 1 }}>
-                        <Button onClick={() => setModalidadAEliminar(null)} sx={{ color: COLORS.textSecondary, textTransform: 'none', fontWeight: 600 }}>
-                            Cancelar
-                        </Button>
-                        <Button 
-                            onClick={handleEliminar} 
-                            variant="contained" 
-                            sx={{ backgroundColor: '#dc2626', '&:hover': { backgroundColor: '#b91c1c' }, textTransform: 'none', fontWeight: 600, borderRadius: 2 }}
-=======
                     <div className="col-12 col-md-3 d-flex gap-2">
-                        <button type="button" className="btn btn-light border text-muted fw-medium d-flex align-items-center justify-content-center gap-2 w-100" 
-                            onClick={() => {
-                                setBusqueda('');
-                                setBusquedaAplicada('');
-                                setEstadoFiltro('');
-                                setPagina(0);
-                            }}
->>>>>>> a659ffd06126e66d6beb2f8e39accb9b21ca112b
-                        >
-                            <RefreshCcw size={16} /> Limpiar
-                        </button>
-                        <button type="button" className="btn btn-premium-accent d-flex align-items-center justify-content-center gap-2 w-100"
+                        <button 
+                            type="button" 
+                            className="btn btn-premium-accent d-flex align-items-center justify-content-center gap-2 w-100 py-2"
                             onClick={() => {
                                 setBusquedaAplicada(busqueda);
                                 setPagina(0);
                             }}
                         >
                             <Filter size={16} /> Filtrar
+                        </button>
+                        <button 
+                            type="button" 
+                            className="btn btn-light border d-flex align-items-center justify-content-center px-3 py-2"
+                            title="Limpiar filtros"
+                            onClick={() => {
+                                setBusqueda('');
+                                setBusquedaAplicada('');
+                                setEstadoFiltro('');
+                                setPagina(0);
+                            }}
+                        >
+                            <RefreshCcw size={16} />
                         </button>
                     </div>
 
