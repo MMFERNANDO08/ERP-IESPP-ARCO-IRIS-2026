@@ -1,9 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Plus, ArrowLeft, BookOpen, Edit3, Trash2, Clock, Award, Layers } from 'lucide-react';
-// Importa aquí tu servicio de cursos. Asegúrate de tener estas funciones en el servicio.
+import { Plus, ArrowLeft, BookOpen, Edit3, Trash2, Clock, Award, Layers, AlertCircle } from 'lucide-react';
 import { cursoService } from '../../services/cursoService';
-// import { planEstudioService } from '../../services/planEstudioService'; // Opcional: para traer el nombre del plan
 
 const CICLOS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
 
@@ -26,7 +24,8 @@ const premiumStyles = `
         background: #ffffff;
         border-radius: var(--radius-lg);
         border: 1px solid rgba(226, 232, 240, 0.8);
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -2px rgba(0, 0, 0, 0.02);
+        transition: all 0.2s ease;
     }
     .btn-premium-accent {
         background-color: var(--teal-600);
@@ -47,6 +46,7 @@ const premiumStyles = `
         border: 1px solid var(--slate-200);
         padding: 0.65rem 1rem;
         font-size: 0.9rem;
+        background-color: #fff;
     }
     .premium-input-group .form-control:focus, .premium-input-group .form-select:focus {
         border-color: var(--teal-500);
@@ -61,6 +61,7 @@ const premiumStyles = `
         display: flex;
         align-items: center;
         gap: 4px;
+        letter-spacing: 0.5px;
     }
     .premium-table th {
         background-color: var(--slate-50);
@@ -68,6 +69,7 @@ const premiumStyles = `
         font-size: 0.75rem;
         font-weight: 700;
         text-transform: uppercase;
+        letter-spacing: 0.5px;
         padding: 1rem;
         border-bottom: 2px solid var(--slate-200);
     }
@@ -77,30 +79,42 @@ const premiumStyles = `
         border-bottom: 1px solid var(--slate-100);
         font-size: 0.9rem;
     }
-    .badge-soft-primary { background-color: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; }
-    .badge-soft-warning { background-color: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .badge-soft-primary { background-color: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; font-weight: 500; }
+    .badge-soft-warning { background-color: #fef3c7; color: #92400e; border: 1px solid #fde68a; font-weight: 500; }
+    
     .modal-content.premium-modal {
         border: none;
         border-radius: var(--radius-xl);
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+        overflow: hidden;
     }
     .premium-modal .modal-header {
-        background: linear-gradient(to right, var(--slate-900), #1e293b);
+        background: linear-gradient(135deg, var(--slate-900), var(--slate-800));
         color: white;
         border-bottom: none;
         padding: 1.5rem;
-        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     }
     .premium-modal .modal-footer {
         background-color: var(--slate-50);
         border-top: 1px solid var(--slate-200);
         padding: 1.25rem 1.5rem;
-        border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+    }
+    .action-btn {
+        width: 34px;
+        height: 34px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        transition: all 0.2s;
+    }
+    .action-btn:hover {
+        transform: translateY(-2px);
     }
 `;
 
 export default function GestionCursosPlan() {
-    const { id } = useParams(); // Obtenemos el ID del plan desde la URL
+    const { id } = useParams();
     const navigate = useNavigate();
 
     const FORMULARIO_VACIO = {
@@ -134,16 +148,11 @@ export default function GestionCursosPlan() {
     const cargarCursos = useCallback(async () => {
         setCargando(true);
         try {
-            // Asume que tu servicio tiene un método para listar cursos por plan de estudio
-            // Si el endpoint general soporta filtros, podría ser: cursoService.listar({ plan_estudio_id: id })
             const resp = await cursoService.listar({ plan_estudio_id: id });
-            
-            // Extraer arreglo seguro
             let data = [];
             if (Array.isArray(resp)) data = resp;
             else if (resp?.data && Array.isArray(resp.data)) data = resp.data;
             else if (resp?.data?.data && Array.isArray(resp.data.data)) data = resp.data.data;
-            
             setCursos(data);
         } catch (error) {
             mostrarFeedback('error', 'Error al cargar los cursos del plan.');
@@ -189,7 +198,6 @@ export default function GestionCursosPlan() {
     const guardarCurso = async (e) => {
         e.preventDefault();
         setGuardando(true);
-
         try {
             if (formulario.id) {
                 await cursoService.actualizar(formulario.id, formulario);
@@ -219,7 +227,6 @@ export default function GestionCursosPlan() {
         }
     };
 
-    // Agrupar cursos por ciclo para renderizarlos en bloques ordenados
     const cursosPorCiclo = CICLOS.reduce((acc, ciclo) => {
         acc[ciclo] = cursos.filter(c => c.ciclo === ciclo);
         return acc;
@@ -232,43 +239,47 @@ export default function GestionCursosPlan() {
             <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
                 <div className="d-flex align-items-center gap-3">
                     <button 
-                        onClick={() => navigate('/planes-estudio')} 
-                        className="btn btn-light border shadow-sm rounded-circle d-flex align-items-center justify-content-center"
-                        style={{ width: '40px', height: '40px' }}
+                        onClick={() => navigate('/gestion-global/planes-estudio')} 
+                        className="action-btn btn btn-light border shadow-sm text-secondary"
+                        title="Volver a Planes de Estudio"
                     >
-                        <ArrowLeft size={20} className="text-muted" />
+                        <ArrowLeft size={18} />
                     </button>
                     <div>
                         <h2 className="fw-bold mb-1" style={{ color: 'var(--slate-900)', letterSpacing: '-0.5px' }}>
                             Malla Curricular
                         </h2>
-                        <p className="mb-0 text-muted d-flex align-items-center gap-2">
-                            <Layers size={16} /> <span>Gestión de cursos por semestre académico.</span>
+                        <p className="mb-0 text-muted d-flex align-items-center gap-2 small">
+                            <Layers size={15} className="text-teal-600" /> <span>Gestión y distribución de asignaturas por semestre académico.</span>
                         </p>
                     </div>
                 </div>
-                <button onClick={abrirModalNuevo} className="btn btn-premium-accent px-4 py-2 d-flex align-items-center gap-2">
+                <button onClick={abrirModalNuevo} className="btn btn-premium-accent px-4 py-2 d-flex align-items-center gap-2 shadow-sm">
                     <Plus size={18} /> <span>Agregar Curso</span>
                 </button>
             </div>
 
             {feedback && (
                 <div className={`alert alert-${feedback.type === 'error' ? 'danger' : 'success'} border-0 shadow-sm rounded-3 py-3 d-flex align-items-center mb-4`}>
-                    <span className="fw-semibold">{feedback.message}</span>
+                    <span className="fw-medium">{feedback.message}</span>
                 </div>
             )}
 
             {cargando ? (
                 <div className="text-center py-5">
                     <div className="spinner-border text-teal-600" role="status"></div>
+                    <p className="text-muted small mt-2">Cargando malla curricular...</p>
                 </div>
             ) : cursos.length === 0 ? (
-                <div className="premium-card text-center py-5">
-                    <div className="bg-light rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style={{ width: '80px', height: '80px' }}>
-                        <BookOpen size={36} className="text-muted opacity-50" />
+                <div className="premium-card text-center py-5 px-3">
+                    <div className="bg-light rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style={{ width: '70px', height: '70px' }}>
+                        <BookOpen size={30} className="text-muted opacity-50" />
                     </div>
                     <h5 className="fw-bold" style={{ color: 'var(--slate-800)' }}>Malla Curricular Vacía</h5>
-                    <p className="text-muted mb-0">No hay cursos registrados en este plan de estudios. Comienza agregando uno.</p>
+                    <p className="text-muted small mb-3">No hay cursos registrados en este plan de estudios actualmente.</p>
+                    <button onClick={abrirModalNuevo} className="btn btn-sm btn-outline-secondary px-3">
+                        Comenzar agregando uno
+                    </button>
                 </div>
             ) : (
                 <div className="row g-4">
@@ -279,58 +290,64 @@ export default function GestionCursosPlan() {
                         return (
                             <div key={ciclo} className="col-12">
                                 <div className="premium-card overflow-hidden">
-                                    <div className="p-3 bg-light border-bottom d-flex align-items-center gap-2">
-                                        <div className="bg-white border rounded px-2 py-1 fw-bold text-teal-700 shadow-sm">
-                                            CICLO {ciclo}
+                                    <div className="px-4 py-3 bg-light border-bottom d-flex align-items-center justify-content-between">
+                                        <div className="d-flex align-items-center gap-2">
+                                            <span className="badge bg-light text-dark border shadow-sm px-3 py-2 fw-bold text-uppercase">
+                                                Ciclo {ciclo}
+                                            </span>
                                         </div>
-                                        <span className="text-muted small fw-medium">
-                                            {cursosDelCiclo.length} Asignatura(s)
+                                        <span className="text-muted small fw-medium bg-white px-2 py-1 rounded border shadow-sm">
+                                            {cursosDelCiclo.length} {cursosDelCiclo.length === 1 ? 'Asignatura' : 'Asignaturas'}
                                         </span>
                                     </div>
                                     <div className="table-responsive">
                                         <table className="table premium-table mb-0">
                                             <thead>
                                                 <tr>
-                                                    <th className="ps-4" style={{ width: '120px' }}>Código</th>
+                                                    <th className="ps-4" style={{ width: '130px' }}>Código</th>
                                                     <th>Asignatura</th>
-                                                    <th>Tipo</th>
-                                                    <th className="text-center">Créditos</th>
-                                                    <th className="text-center">HT / HP</th>
-                                                    <th className="text-end pe-4">Acciones</th>
+                                                    <th style={{ width: '140px' }}>Tipo</th>
+                                                    <th className="text-center" style={{ width: '110px' }}>Créditos</th>
+                                                    <th className="text-center" style={{ width: '160px' }}>HT / HP</th>
+                                                    <th className="text-end pe-4" style={{ width: '120px' }}>Acciones</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {cursosDelCiclo.map(curso => (
                                                     <tr key={curso.id}>
-                                                        <td className="ps-4 fw-bold text-muted">{curso.codigo}</td>
+                                                        <td className="ps-4 fw-bold text-secondary font-monospace">{curso.codigo}</td>
                                                         <td className="fw-bold text-dark">{curso.nombre}</td>
                                                         <td>
-                                                            <span className={`badge px-2 py-1 rounded ${curso.tipo === 'OBLIGATORIO' ? 'badge-soft-primary' : 'badge-soft-warning'}`}>
+                                                            <span className={`badge px-2.5 py-1 rounded-pill ${curso.tipo === 'OBLIGATORIO' ? 'badge-soft-primary' : 'badge-soft-warning'}`}>
                                                                 {curso.tipo}
                                                             </span>
                                                         </td>
-                                                        <td className="text-center fw-medium">
-                                                            <Award size={14} className="text-teal-600 me-1" /> {curso.creditos}
+                                                        <td className="text-center fw-semibold">
+                                                            <div className="d-inline-flex align-items-center gap-1 text-teal-700 bg-light px-2 py-1 rounded">
+                                                                <Award size={13} /> {curso.creditos}
+                                                            </div>
                                                         </td>
-                                                        <td className="text-center text-muted">
-                                                            <Clock size={14} className="me-1" />
-                                                            HT: {curso.horas_teoria} | HP: {curso.horas_practica}
+                                                        <td className="text-center text-muted small">
+                                                            <div className="d-inline-flex align-items-center gap-1">
+                                                                <Clock size={13} className="text-muted" />
+                                                                <span>HT: {curso.horas_teoria} | HP: {curso.horas_practica}</span>
+                                                            </div>
                                                         </td>
                                                         <td className="text-end pe-4">
-                                                            <div className="d-flex gap-2 justify-content-end">
+                                                            <div className="d-flex gap-1.5 justify-content-end">
                                                                 <button 
-                                                                    className="btn btn-sm btn-light border text-primary shadow-sm"
+                                                                    className="action-btn btn btn-sm btn-light border text-primary shadow-sm"
                                                                     onClick={() => abrirModalEditar(curso)}
                                                                     title="Editar Curso"
                                                                 >
-                                                                    <Edit3 size={15} />
+                                                                    <Edit3 size={14} />
                                                                 </button>
                                                                 <button 
-                                                                    className="btn btn-sm btn-light border text-danger shadow-sm"
+                                                                    className="action-btn btn btn-sm btn-light border text-danger shadow-sm"
                                                                     onClick={() => setCursoAEliminar(curso)}
                                                                     title="Eliminar Curso"
                                                                 >
-                                                                    <Trash2 size={15} />
+                                                                    <Trash2 size={14} />
                                                                 </button>
                                                             </div>
                                                         </td>
@@ -355,13 +372,13 @@ export default function GestionCursosPlan() {
                                 <div className="modal-header d-flex justify-content-between align-items-center">
                                     <div className="d-flex align-items-center gap-3">
                                         <div className="bg-white bg-opacity-10 p-2 rounded-3">
-                                            <BookOpen size={24} className="text-white" />
+                                            <BookOpen size={22} className="text-white" />
                                         </div>
                                         <div>
-                                            <h5 className="modal-title fw-bold mb-0 text-white">
+                                            <h5 className="modal-title fw-bold mb-0 text-white fs-5">
                                                 {formulario.id ? 'Editar Asignatura' : 'Nueva Asignatura'}
                                             </h5>
-                                            <small className="text-white-50">Ingresa los datos académicos del curso.</small>
+                                            <small className="text-white-50">Completa los campos con la información académica.</small>
                                         </div>
                                     </div>
                                     <button type="button" className="btn-close btn-close-white" onClick={() => setModalFormularioAbierto(false)}></button>
@@ -373,13 +390,13 @@ export default function GestionCursosPlan() {
                                             <div className="col-md-3">
                                                 <div className="premium-input-group">
                                                     <label className="filter-label">Código <span className="text-danger">*</span></label>
-                                                    <input type="text" className="form-control" name="codigo" value={formulario.codigo} onChange={actualizarCampoForm} required />
+                                                    <input type="text" className="form-control" name="codigo" value={formulario.codigo} onChange={actualizarCampoForm} placeholder="Ej. MAT101" required />
                                                 </div>
                                             </div>
                                             <div className="col-md-9">
                                                 <div className="premium-input-group">
                                                     <label className="filter-label">Nombre del Curso <span className="text-danger">*</span></label>
-                                                    <input type="text" className="form-control" name="nombre" value={formulario.nombre} onChange={actualizarCampoForm} required />
+                                                    <input type="text" className="form-control" name="nombre" value={formulario.nombre} onChange={actualizarCampoForm} placeholder="Ej. Cálculo I" required />
                                                 </div>
                                             </div>
                                             
@@ -403,7 +420,7 @@ export default function GestionCursosPlan() {
                                             <div className="col-md-4">
                                                 <div className="premium-input-group">
                                                     <label className="filter-label">Créditos <span className="text-danger">*</span></label>
-                                                    <input type="number" step="0.5" className="form-control" name="creditos" value={formulario.creditos} onChange={actualizarCampoForm} required />
+                                                    <input type="number" step="0.5" className="form-control" name="creditos" value={formulario.creditos} onChange={actualizarCampoForm} placeholder="Ej. 4" required />
                                                 </div>
                                             </div>
 
@@ -423,12 +440,14 @@ export default function GestionCursosPlan() {
                                     </form>
                                 </div>
 
-                                <div className="modal-footer d-flex justify-content-between">
-                                    <span className="text-muted small">* Campos obligatorios</span>
+                                <div className="modal-footer d-flex justify-content-between align-items-center">
+                                    <span className="text-muted small d-flex align-items-center gap-1">
+                                        <span className="text-danger">*</span> Campos obligatorios
+                                    </span>
                                     <div className="d-flex gap-2">
-                                        <button type="button" className="btn btn-light fw-medium px-4" onClick={() => setModalFormularioAbierto(false)} disabled={guardando}>Cancelar</button>
-                                        <button type="submit" form="form-curso" className="btn btn-premium-accent fw-medium px-5" disabled={guardando}>
-                                            {guardando ? 'Guardando...' : 'Guardar'}
+                                        <button type="button" className="btn btn-light fw-medium px-4 border" onClick={() => setModalFormularioAbierto(false)} disabled={guardando}>Cancelar</button>
+                                        <button type="submit" form="form-curso" className="btn btn-premium-accent fw-medium px-4" disabled={guardando}>
+                                            {guardando ? 'Guardando...' : 'Guardar Curso'}
                                         </button>
                                     </div>
                                 </div>
@@ -444,19 +463,22 @@ export default function GestionCursosPlan() {
                 <div className="modal fade show d-block" tabIndex="-1" style={{ zIndex: 1060 }}>
                     <div className="modal-dialog modal-dialog-centered">
                         <div className="modal-content premium-modal">
-                            <div className="modal-header bg-danger bg-gradient text-white">
-                                <h5 className="modal-title fw-bold">Eliminar Curso</h5>
+                            <div className="modal-header bg-danger text-white">
+                                <div className="d-flex align-items-center gap-2">
+                                    <AlertCircle size={20} />
+                                    <h5 className="modal-title fw-bold fs-5">Eliminar Asignatura</h5>
+                                </div>
                                 <button type="button" className="btn-close btn-close-white" onClick={() => setCursoAEliminar(null)}></button>
                             </div>
                             <div className="modal-body p-4">
-                                <p className="mb-0">
-                                    ¿Está seguro que desea eliminar el curso <strong>{cursoAEliminar.codigo} - {cursoAEliminar.nombre}</strong>? 
-                                    Esta acción no se puede deshacer y puede afectar matrículas existentes.
+                                <p className="mb-0 text-secondary">
+                                    ¿Está seguro que desea eliminar el curso <strong className="text-dark">[{cursoAEliminar.codigo}] {cursoAEliminar.nombre}</strong>? 
+                                    <span className="d-block mt-2 text-muted small">Esta acción no se puede deshacer y podría afectar el historial o matrículas vinculadas.</span>
                                 </p>
                             </div>
-                            <div className="modal-footer">
-                                <button type="button" className="btn btn-light" onClick={() => setCursoAEliminar(null)}>Cancelar</button>
-                                <button type="button" className="btn btn-danger" onClick={eliminarCurso}>Sí, Eliminar</button>
+                            <div className="modal-footer bg-light">
+                                <button type="button" className="btn btn-light border px-4" onClick={() => setCursoAEliminar(null)}>Cancelar</button>
+                                <button type="button" className="btn btn-danger px-4" onClick={eliminarCurso}>Sí, Eliminar</button>
                             </div>
                         </div>
                     </div>

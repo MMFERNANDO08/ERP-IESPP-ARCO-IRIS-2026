@@ -43,7 +43,6 @@ import {
     Tag,
     Building2,
     School,
-    // --- NUEVOS ICONOS AGREGADOS PARA MATRÍCULA ---
     ClipboardList,
     Download,
     DollarSign,
@@ -56,8 +55,15 @@ import {
     UserPlus2,
     Settings2,
     FileStack,
-    UserMinus
-
+    UserMinus,
+    // --- NUEVOS ICONOS PARA TESORERÍA ---
+    Wallet,
+    Receipt,
+    FileWarning,
+    Ban,
+    CalendarDays,
+    Banknote,
+    Tags
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { THEME_COLORS } from '../theme/colors';
@@ -74,12 +80,13 @@ export default function DashboardLayout() {
     const [mobileOpen, setMobileOpen] = useState(false);
     const [anchorEl, setAnchorEl] = useState(null);
 
-    // Control de acordeones (Detecta automáticamente si estás en una ruta hija)
+    // Control de acordeones
     const [openMenus, setOpenMenus] = useState({
         users: location.pathname.startsWith('/users') || location.pathname.startsWith('/roles'),
         admission: location.pathname.startsWith('/admission'),
         matricula: location.pathname.startsWith('/matricula'),
-        gestionGlobal: location.pathname.startsWith('/gestion-global'),        
+        gestionGlobal: location.pathname.startsWith('/gestion-global'),
+        treasury: location.pathname.startsWith('/treasury'), // <-- Añadido tesorería
     });
 
     useEffect(() => {
@@ -94,6 +101,9 @@ export default function DashboardLayout() {
         }
         if (location.pathname.startsWith('/gestion-global')) {
             setOpenMenus((prev) => ({ ...prev, gestionGlobal: true }));
+        }
+        if (location.pathname.startsWith('/treasury')) {
+            setOpenMenus((prev) => ({ ...prev, treasury: true }));
         }
     }, [location.pathname]);
 
@@ -111,7 +121,6 @@ export default function DashboardLayout() {
         logout();
     };
 
-    // Estructura oficial del Menú Lateral
     const navigationGroups = [
         {
             type: 'single',
@@ -120,7 +129,6 @@ export default function DashboardLayout() {
             path: '/',
             show: true,
         },
-        // SE AGREGA GESTION MATRICULA
         {
             type: 'group',
             id: 'matricula',
@@ -143,7 +151,6 @@ export default function DashboardLayout() {
                 { text: 'Retiro Curso', icon: <UserMinus size={16} />, path: '/matricula/retiro' },
             ],
         },
-
         {
             type: 'group',
             id: 'users',
@@ -181,16 +188,27 @@ export default function DashboardLayout() {
                 { text: 'Niveles Educativos', icon: <School size={16} />, path: '/gestion-global/niveles-educativos' },
                 { text: 'Especialidades', icon: <Briefcase size={16} />, path: '/gestion-global/especialidad' },
                 { text: 'Planes de estudio', icon: <BookOpen size={16} />, path: '/gestion-global/planes-estudio' },
-                { text: 'Periodos', icon: <Calendar size={16} />, path: '/gestion-global/periodos' }, // <--- ¡BOTÓN DE PERIODOS AÑADIDO AQUÍ!
+                { text: 'Periodos', icon: <Calendar size={16} />, path: '/gestion-global/periodos' },
                 { text: 'Secciones', icon: <Tag size={16} />, path: '/gestion-global/secciones' },
             ],
         },
+        // --- MÓDULO DE TESORERÍA ACTUALIZADO ---
         {
-            type: 'single',
-            text: 'Módulo de Tesorería',
+            type: 'group',
+            id: 'treasury',
+            text: 'Gestión Tesorería',
             icon: <CreditCard size={18} />,
-            path: '/treasury',
             show: hasRole('superadmin') || hasRole('admin'),
+            children: [
+                { text: 'Pagos Alumno', icon: <Receipt size={16} />, path: '/treasury/pagos-alumno' },
+                { text: 'Deudas Alumnos', icon: <FileWarning size={16} />, path: '/treasury/deudas' },
+                { text: 'Generar Cuotas', icon: <CalendarDays size={16} />, path: '/treasury/generar-cuotas' },
+                { text: 'Ingresos por Fechas', icon: <Banknote size={16} />, path: '/treasury/ingresos-fechas' },
+                { text: 'Anula Pago Alumno', icon: <Ban size={16} />, path: '/treasury/anula-pago' },
+                { text: 'Becas / Autorizaciones', icon: <Award size={16} />, path: '/treasury/becas' },
+                { text: 'Tipo de Pagos', icon: <Tags size={16} />, path: '/treasury/tipo-pagos' },
+                { text: 'Importar Pagos', icon: <UploadCloud size={16} />, path: '/treasury/importar-pagos' },
+            ],
         },
         {
             type: 'single',
@@ -311,35 +329,40 @@ export default function DashboardLayout() {
         </Box>
     );
 
-    // Sistema Inteligente de Títulos de la Barra Superior
     const getPageTitle = () => {
         const path = location.pathname;
         if (path === '/admission/inscribir') return 'Admisión — Registro e Inscripción de Postulante';
         if (path.startsWith('/admission')) return 'Módulo de Admisión — Convocatorias y Postulantes';
-        if (path.startsWith('/treasury')) return 'Módulo de Tesorería — Caja y Cobranzas';
         if (path.startsWith('/users')) return 'Gestión de Usuarios del Sistema';
         if (path.startsWith('/roles')) return 'Gestión de Roles y Permisos';
         if (path.startsWith('/alumnos')) return 'Gestión de Alumnos';
         
-        // Títulos Dinámicos para Gestión Global
         if (path.startsWith('/gestion-global/modalidad')) return 'Gestión Global — Modalidades';
         if (path.startsWith('/gestion-global/facultades')) return 'Gestión Global — Facultades';
         if (path.startsWith('/gestion-global/niveles-educativos')) return 'Gestión Global — Niveles Educativos';
         if (path.startsWith('/gestion-global/especialidad')) return 'Gestión Global — Especialidades Académicas';
         if (path.startsWith('/gestion-global/planes-estudio')) return 'Gestión Global — Planes de Estudio';
-        if (path.startsWith('/gestion-global/periodos')) return 'Gestión Global — Periodos Académicos'; // <--- TÍTULO DINÁMICO DE PERIODOS
+        if (path.startsWith('/gestion-global/periodos')) return 'Gestión Global — Periodos Académicos'; 
         if (path.startsWith('/gestion-global/secciones')) return 'Gestión Global — Secciones y Periodos';
         if (path.startsWith('/gestion-global')) return 'Gestión Global Académica';
 
-        // --- AGREGAMOS MATRICULA
         if (path.startsWith('/matricula')) {
-            // Esto genera el título automáticamente
             const subRuta = path.split('/')[2];
             if (subRuta) {
                 const formatted = subRuta.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                 return `Gestión Matrícula — ${formatted}`;
             }
             return 'Gestión Matrícula';
+        }
+
+        // --- DINÁMICO PARA TESORERÍA ---
+        if (path.startsWith('/treasury')) {
+            const subRuta = path.split('/')[2];
+            if (subRuta) {
+                const formatted = subRuta.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                return `Gestión Tesorería — ${formatted}`;
+            }
+            return 'Módulo de Tesorería';
         }
 
         return 'ERP IESPP Arco Iris — Panel General';

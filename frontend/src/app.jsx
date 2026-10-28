@@ -37,18 +37,19 @@ import CuadroMeritoPage from './pages/admission/CuadroMeritoPage';
 // Páginas de Gestión Global
 import GestionCarrera from './pages/global/especialidad';
 import GestionPlanesEstudio from './pages/global/planesEstudio';
-import GestionCursosPlan from './pages/global/GestionCursosPlan'; // <--- ¡NUEVO: IMPORTACIÓN DE CURSOS!
+import GestionCursosPlan from './pages/global/GestionCursosPlan';
 import GestionModalidades from './pages/global/modalidad';
 import GestionNivelesEducativos from './pages/global/nivelesEducativos';
 import GestionFacultades from './pages/global/facultades';
-import GestionPeriodos from './pages/global/periodos'; // <--- ¡IMPORTACIÓN DEL MÓDULO DE PERIODOS!
+import GestionPeriodos from './pages/global/periodos';
 
 // -------------
 import CostosMatricula from './pages/matricula/CostosMatricula';
 // ------------------
 
-// Página de tesorería
+// Páginas de tesorería
 import TreasuryDashboard from './pages/treasury/TreasuryDashboard';
+import GestionTiposPago from './pages/tesoreria/TiposPago'; // <--- ¡IMPORTACIÓN DE TIPOS DE PAGO!
 
 ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>
@@ -159,7 +160,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
                                     element={<GestionPlanesEstudio />}
                                 />
 
-                                {/* <--- ¡NUEVO: RUTA PARA LA MALLA CURRICULAR (CURSOS) ---> */}
                                 <Route
                                     path="/planes-estudio/:id/cursos"
                                     element={<GestionCursosPlan />}
@@ -175,6 +175,13 @@ ReactDOM.createRoot(document.getElementById('root')).render(
                                     path="/treasury"
                                     element={<TreasuryDashboard />}
                                 />
+                                
+                                {/* <--- ¡NUEVA RUTA: TIPOS DE PAGO ---> */}
+                                <Route
+                                    path="/treasury/tipo-pagos"
+                                    element={<GestionTiposPago />}
+                                />
+
                             </Route>
                         </Route>
                     </Route>

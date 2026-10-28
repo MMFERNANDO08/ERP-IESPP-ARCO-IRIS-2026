@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\SeccionController;
 use App\Http\Controllers\Api\PlanEstudioController;
 use App\Http\Controllers\Api\PeriodoController;
 use App\Http\Controllers\Api\TesoreriaPagoController;
+use App\Http\Controllers\Api\TipoPagoController; // <-- NUEVO CONTROLADOR IMPORTADO
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\MatriculaController;
@@ -172,6 +173,16 @@ Route::middleware(['auth:sanctum'])->prefix('tesoreria')->group(function () {
     Route::get('/pagos-admision', [TesoreriaPagoController::class, 'index'])->middleware('permission:admision.postulantes.ver|admision.postulantes.inscribir');
     Route::get('/pagos-admision/consultar/{dni}', [TesoreriaPagoController::class, 'consultarDni'])->middleware('permission:admision.postulantes.ver|admision.postulantes.inscribir');
     Route::post('/pagos-admision/{postulacion}/registrar-pago', [TesoreriaPagoController::class, 'registrarPago'])->middleware('permission:admision.postulantes.inscribir');
+});
+
+// Gestión de Tipos de Pago (NUEVO BLOQUE)
+Route::middleware(['auth:sanctum'])->prefix('tipos-pago')->group(function () {
+    Route::get('/', [TipoPagoController::class, 'index']);
+    Route::post('/', [TipoPagoController::class, 'store']);
+    Route::get('/{id}', [TipoPagoController::class, 'show']);
+    Route::put('/{id}', [TipoPagoController::class, 'update']);
+    Route::patch('/{id}/estado', [TipoPagoController::class, 'cambiarEstado']);
+    Route::delete('/{id}', [TipoPagoController::class, 'destroy']);
 });
 
 // Testing & Verification Protected Routes
