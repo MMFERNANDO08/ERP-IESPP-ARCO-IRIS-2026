@@ -1,182 +1,256 @@
-import React, { useState, useEffect } from 'react';
-import {
-    Box, Container, Typography, Grid, TextField, MenuItem, Button, Paper
-} from '@mui/material';
-import axios from 'axios';
+import React, { useEffect, useState } from 'react';
+import { Coins, AlertCircle } from 'lucide-react';
 
+// ==============================================================================
+// ⚠️ IMPORTANTE: CAMBIA ESTA URL POR LA DE TU BACKEND (Laravel, Node, etc.)
+// ==============================================================================
+const API_BASE_URL = 'http://localhost:8000/api'; 
+
+const premiumStyles = `
+    :root { --slate-50: #f8fafc; --slate-200: #e2e8f0; --slate-800: #1e293b; --slate-900: #0f172a; --teal-600: #0d9488; --teal-700: #0f766e; --radius-lg: 12px; }
+    body { background-color: var(--slate-50); }
+    .premium-card { background: #ffffff; border-radius: var(--radius-lg); border: 1px solid rgba(226, 232, 240, 0.8); box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05); }
+    .btn-premium-accent { background-color: var(--teal-600); color: white; border: none; border-radius: 8px; font-weight: 500; transition: all 0.2s; }
+    .btn-premium-accent:hover { background-color: var(--teal-700); color: white; }
+    .premium-input-group .form-select { border-radius: 8px; border: 1px solid var(--slate-200); padding: 0.65rem 1rem; font-size: 0.9rem; color: var(--slate-800); background-color: #ffffff; transition: all 0.2s; }
+    .premium-input-group .form-select:focus { border-color: var(--teal-600); box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1); }
+    .filter-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--slate-800); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 6px; min-height: 18px; }
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.4); display: flex; align-items: center; justify-content: center; z-index: 1050; }
+    .modal-alert-box { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1050; max-width: 90%; background: white; border-radius: 8px; padding: 2rem; width: 100%; max-width: 450px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+    .icon-alert { color: #f59e0b; display: block; margin-left: auto; margin-right: auto; margin-bottom: 1rem; }
+    .btn-alert-ok { background-color: #bae6fd; color: #0369a1; border: none; border-radius: 6px; padding: 0.5rem 2rem; font-weight: 500; margin-top: 1rem; cursor: pointer; transition: all 0.2s; }
+    .btn-alert-ok:hover { background-color: #7dd3fc; }   
+    
+`;
 export default function CostosMatricula() {
-    // Estados para los datos de los combos
+    const [mostrarTabla, setMostrarTabla] = useState(false);
+    
+    // 1. ESTADOS PARA GUARDAR LOS DATOS DE LAS TABLAS
     const [modalidades, setModalidades] = useState([]);
-    const [programas, setProgramas] = useState([]);
     const [periodos, setPeriodos] = useState([]);
+    const [facultades, setFacultades] = useState([]);
+    const [carreras, setCarreras] = useState([]);
 
-    // Estados para los valores seleccionados
+    // Estado de carga para saber si el backend está respondiendo
+    const [cargando, setCargando] = useState(true);
+    const [errorApi, setErrorApi] = useState(null);
+
+    // Estado para el Modal de advertencia
+    const [modalAdvertencia, setModalAdvertencia] = useState({ isOpen: false, mensaje: '' });
+
+    // Estado para los filtros seleccionados
     const [filtros, setFiltros] = useState({
         modalidad_id: '',
-        periodo_id: '2026-II', // Valor por defecto como en tu imagen
-        tipo_matricula: 'REGULAR',
-        programa_id: '',
-        carrera_id: '',
+        periodo_id: '',
+        tipo_matricula: 'ESPECIAL', // Por defecto como en tu imagen
+        programa_id: '', // Apunta a facultades
+        carrera_id: '',  // Apunta a programas_estudio
         sede: 'PRINCIPAL'
     });
 
-    // Cargar datos de la BD al iniciar
-        useEffect(() => {
-        const cargarCombos = async () => {
+    // 2. EFECTO PARA CONSUMIR LAS APIS AL CARGAR LA PANTALLA
+    useEffect(() => {
+        const styleSheet = document.createElement('style');
+        styleSheet.innerText = premiumStyles;
+        document.head.appendChild(styleSheet);
+
+        const cargarCatalogos = async () => {
+            setCargando(true);
+            setErrorApi(null);
             try {
-                const [resMod, resProg, resPer] = await Promise.all([
-                    axios.get('/api/matricula/modalidades'), 
-                    axios.get('/api/matricula/programas'),   
-                    axios.get('/api/matricula/periodos')     
+                // Hacemos las 4 peticiones al mismo tiempo para mayor velocidad
+                
+                 const [resMod, resPer, resFac, resCar] = await Promise.all([
+                    fetch(`${API_BASE_URL}/modalidad-estudios`, {
+                        headers: { 'Accept': 'application/json' }
+                    }),
+                    fetch(`${API_BASE_URL}/periodos-academicos`, {
+                        headers: { 'Accept': 'application/json' }
+                    }),
+                    fetch(`${API_BASE_URL}/facultades`, {
+                        headers: { 'Accept': 'application/json' }
+                    }),
+                    fetch(`${API_BASE_URL}/programas-estudio`, {
+                        headers: { 'Accept': 'application/json' }
+                    })
                 ]);
-                setModalidades(resMod.data);
-                setProgramas(resProg.data);
-                setPeriodos(resPer.data);
+
+                // Si alguna falla, lanzamos error
+                if (!resMod.ok || !resPer.ok || !resFac.ok || !resCar.ok) {
+                    throw new Error('Error al conectar con el servidor. Verifica las rutas de tu API.');
+                }
+
+                // Convertimos las respuestas a JSON
+                const dataMod = await resMod.json();
+                const dataPer = await resPer.json();
+                const dataFac = await resFac.json();
+                const dataCar = await resCar.json();
+
+                // Si tu backend (ej. Laravel) devuelve { data: [...] }, usamos .data. Si no, usamos el array directo.
+                setModalidades(dataMod.data || dataMod);
+                setPeriodos(dataPer.data || dataPer);
+                setFacultades(dataFac.data || dataFac);
+                setCarreras(dataCar.data || dataCar);
+
             } catch (error) {
-                console.error("Error cargando combos", error);
+                console.error(error);
+                setErrorApi("No se pudieron cargar los datos de los filtros. " + error.message);
+            } finally {
+                setCargando(false);
             }
         };
-        cargarCombos();
+
+        cargarCatalogos();
+
+        return () => styleSheet.remove();
     }, []);
 
-    const handleChange = (e) => {
-        setFiltros({ ...filtros, [e.target.name]: e.target.value });
+    // Función para actualizar el estado cuando el usuario selecciona una opción
+    const handleFiltroChange = (e) => {
+        const { name, value } = e.target;
+        setFiltros(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleVerCostos = () => {
-        console.log("Buscando costos para:", filtros);
-        // Aquí irá la lógica para llamar al backend y traer la tabla de costos
-    };
-
-    // Estilo común para los selectores
-    const selectStyle = { 
-        backgroundColor: '#fff',
-        '& .MuiOutlinedInput-root': { borderRadius: 1 } 
+    // Validación al dar clic en "Ver Costos"
+    const aplicarFiltros = () => {
+        if (!filtros.programa_id || !filtros.carrera_id) {
+            setModalAdvertencia({
+                isOpen: true,
+                mensaje: 'Debe seleccionar un Programa Académico y Especialidad'
+            });
+            return;
+        }
+        setMostrarTabla(true);
     };
 
     return (
-        <Box sx={{ backgroundColor: '#f8fafc', minHeight: '100vh', p: 3 }}>
-            <Container maxWidth="xl" disableGutters>
-                
-                {/* Título de la página */}
-                <Typography variant="h6" sx={{ color: '#64748b', fontWeight: 600, mb: 3, fontSize: '0.95rem' }}>
-                    COSTOS DE MATRICULA
-                </Typography>
+        <div className="container-fluid px-4 py-5" style={{ maxWidth: '1400px' }}>
+            {/* Título */}
+            <div className="mb-4">
+                <h2 className="fw-bold mb-1" style={{ color: 'var(--slate-900)' }}>Costos de Matrícula</h2>
+                <p className="mb-0 text-muted d-flex align-items-center gap-2">
+                    <Coins size={16} /> <span>Gestiona los costos de matrícula según el periodo académico.</span>
+                </p>
+            </div>
 
-                {/* Formulario de Filtros */}
-                <Grid container spacing={2.5} sx={{ mb: 3 }}>
-                    {/* Fila 1 */}
-                    <Grid item xs={12} sm={6} md={3}>
-                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#475569', mb: 0.5 }}>
-                            Seleccionar Modalidad:
-                        </Typography>
-                        <TextField
-                            select fullWidth size="small" name="modalidad_id"
-                            value={filtros.modalidad_id} onChange={handleChange} sx={selectStyle}
+            {/* Mensaje de Error de API si falla */}
+            {errorApi && (
+                <div className="alert alert-danger shadow-sm rounded-3 mb-4">
+                    <strong>Error de conexión:</strong> {errorApi}
+                </div>
+            )}
+
+            {/* Panel de Filtros */}
+            <div className="premium-card p-4 mb-4">
+                <div className="row g-3 align-items-end">
+                    
+                    {/* Select Modalidad */}
+                    <div className="col-12 col-md-2">
+                        <div className="premium-input-group">
+                            <label className="filter-label">Modalidad:</label>
+                            <select className="form-select" name="modalidad_id" value={filtros.modalidad_id} onChange={handleFiltroChange} disabled={cargando}>
+                                <option value="">{cargando ? 'Cargando...' : 'Seleccione'}</option>
+                                {modalidades.map(m => (
+                                    <option key={m.id} value={m.id}>{m.nombre}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Select Periodo */}
+                    <div className="col-12 col-md-2">
+                        <div className="premium-input-group">
+                            <label className="filter-label">Periodo:</label>
+                            <select className="form-select" name="periodo_id" value={filtros.periodo_id} onChange={handleFiltroChange} disabled={cargando}>
+                                <option value="">{cargando ? 'Cargando...' : 'Seleccione'}</option>
+                                {periodos.map(p => (
+                                    // NOTA: en tu tabla el campo se llama 'nombre_periodo'
+                                    <option key={p.id} value={p.id}>{p.nombre_periodo}</option> 
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Select Tipo Matrícula (Estático) */}
+                    <div className="col-12 col-md-2">
+                        <div className="premium-input-group">
+                            <label className="filter-label">Tipo Matrícula:</label>
+                            <select className="form-select" name="tipo_matricula" value={filtros.tipo_matricula} onChange={handleFiltroChange}>
+                                <option value="REGULAR">REGULAR</option>
+                                <option value="ESPECIAL">ESPECIAL</option>
+                                <option value="CONDICIONAL">CONDICIONAL</option>
+                                <option value="EXTEMPORANEO">EXTEMPORANEO</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Select Programa Académico (Facultades) */}
+                    <div className="col-12 col-md-2">
+                        <div className="premium-input-group">
+                            <label className="filter-label">Programa Académico:</label>
+                            <select className="form-select" name="programa_id" value={filtros.programa_id} onChange={handleFiltroChange} disabled={cargando}>
+                                <option value="">{cargando ? 'Cargando...' : 'Seleccione'}</option>
+                                {facultades.map(f => (
+                                    <option key={f.id} value={f.id}>{f.nombre}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Select Carrera (Programas de Estudio) */}
+                    <div className="col-12 col-md-2">
+                        <div className="premium-input-group">
+                            <label className="filter-label">Especialidad:</label>
+                            <select className="form-select" name="carrera_id" value={filtros.carrera_id} onChange={handleFiltroChange} disabled={cargando}>
+                                <option value="">{cargando ? 'Cargando...' : 'Seleccione'}</option>
+                                {carreras.map(c => (
+                                    <option key={c.id} value={c.id}>{c.nombre}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Select Sede (Estático) */}
+                    <div className="col-12 col-md-2">
+                        <div className="premium-input-group">
+                            <label className="filter-label">Sede</label>
+                            <select className="form-select" name="sede" value={filtros.sede} onChange={handleFiltroChange}>
+                                <option value="PRINCIPAL">PRINCIPAL</option>
+                                <option value="FILIAL">FILIAL</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="row g-3 align-items-end mt-2">
+                    <div className="col-12 col-md-2">
+                        <button
+                            type="button"
+                            className="btn btn-premium-accent w-100 py-2"
+                            style={{ height: '42px', fontSize: '0.9rem' }}
+                            onClick={aplicarFiltros}
+                            disabled={cargando}
                         >
-                            <MenuItem value="">== SELECCIONE ==</MenuItem>
-                            {modalidades.map((mod) => (
-                                <MenuItem key={mod.id} value={mod.id}>{mod.nombre}</MenuItem>
-                            ))}
-                        </TextField>
-                    </Grid>
+                            {cargando ? 'Cargando...' : 'Ver Costos'}
+                        </button>
+                    </div>
+                </div>
+            </div>
 
-                    <Grid item xs={12} sm={6} md={3}>
-                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#475569', mb: 0.5 }}>
-                            Seleccionar Periodo:
-                        </Typography>
-                        <TextField
-                            select fullWidth size="small" name="periodo_id"
-                            value={filtros.periodo_id} onChange={handleChange} sx={selectStyle}
-                        >
-                            {periodos.map((per) => (
-                                <MenuItem key={per.id} value={per.id}>{per.nombre}</MenuItem>
-                            ))}
-                        </TextField>
-                    </Grid>
-
-                    <Grid item xs={12} sm={6} md={3}>
-                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#475569', mb: 0.5 }}>
-                            Tipo Matrícula:
-                        </Typography>
-                        <TextField
-                            select fullWidth size="small" name="tipo_matricula"
-                            value={filtros.tipo_matricula} onChange={handleChange} sx={selectStyle}
-                        >
-                            <MenuItem value="REGULAR">REGULAR</MenuItem>
-                            <MenuItem value="EXTEMPORANEA">EXTEMPORANEA</MenuItem>
-                        </TextField>
-                    </Grid>
-
-                    {/* Fila 2 */}
-                    <Grid item xs={12} sm={6} md={3}>
-                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#475569', mb: 0.5 }}>
-                            Seleccionar Prog. Académico:
-                        </Typography>
-                        <TextField
-                            select fullWidth size="small" name="programa_id"
-                            value={filtros.programa_id} onChange={handleChange} sx={selectStyle}
-                        >
-                            <MenuItem value="">== SELECCIONE ==</MenuItem>
-                            {programas.map((prog) => (
-                                <MenuItem key={prog.id} value={prog.id}>{prog.nombre}</MenuItem>
-                            ))}
-                        </TextField>
-                    </Grid>
-
-                    <Grid item xs={12} sm={6} md={3}>
-                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#475569', mb: 0.5 }}>
-                            Seleccionar Carrera
-                        </Typography>
-                        <TextField
-                            select fullWidth size="small" name="carrera_id"
-                            value={filtros.carrera_id} onChange={handleChange} sx={selectStyle}
-                            disabled // Deshabilitado hasta elegir programa (lógica pendiente)
-                        >
-                            <MenuItem value="">== SELECCIONE ==</MenuItem>
-                        </TextField>
-                    </Grid>
-
-                    <Grid item xs={12} sm={6} md={3}>
-                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#475569', mb: 0.5 }}>
-                            Seleccionar Sede
-                        </Typography>
-                        <TextField
-                            select fullWidth size="small" name="sede"
-                            value={filtros.sede} onChange={handleChange} sx={selectStyle}
-                        >
-                            <MenuItem value="PRINCIPAL">PRINCIPAL</MenuItem>
-                            <MenuItem value="FILIAL">FILIAL</MenuItem>
-                        </TextField>
-                    </Grid>
-
-                    {/* Botón Verde */}
-                    <Grid item xs={12}>
-                        <Button
-                            variant="contained"
-                            onClick={handleVerCostos}
-                            sx={{
-                                backgroundColor: '#84cc16', // Verde lima de tu imagen
-                                color: '#fff',
-                                textTransform: 'none',
-                                fontWeight: 600,
-                                px: 3,
-                                py: 0.8,
-                                mt: 1,
-                                '&:hover': { backgroundColor: '#65a30d' }
-                            }}
-                        >
-                            Ver Costos
-                        </Button>
-                    </Grid>
-                </Grid>
-
-                {/* Espacio reservado para la Tabla de Costos (Futuro) */}
-                <Paper sx={{ p: 4, textAlign: 'center', color: '#94a3b8', border: '1px dashed #cbd5e1' }} elevation={0}>
-                    Los resultados de los costos se mostrarán aquí.
-                </Paper>
-
-            </Container>
-        </Box>
+            {/* Modal de Advertencia */}
+            {modalAdvertencia.isOpen && (
+                <div className="modal-overlay">
+                    <div className="modal-alert-box">
+                        <AlertCircle size={60} strokeWidth={1.5} className="icon-alert" />
+                        <p className="mb-4 text-secondary" style={{ fontSize: '1.05rem' }}>
+                            {modalAdvertencia.mensaje}
+                        </p>
+                        <button className="btn-alert-ok" onClick={() => setModalAdvertencia({ isOpen: false, mensaje: '' })}>
+                            OK
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
     );
 }

@@ -20,6 +20,10 @@ use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\MatriculaController;
 use App\Http\Controllers\Api\CursoController;
+use App\Models\ModalidadEstudio;
+use App\Models\PeriodoAcademico;
+use App\Models\Facultad;
+use App\Models\ProgramaEstudio;
 
 // Alumnos Management
 Route::middleware('auth:sanctum')
@@ -236,4 +240,21 @@ Route::prefix('cursos')->group(function () {
     Route::get('/{id}/prerrequisitos', [CursoController::class, 'obtenerPrerrequisitos']);
     Route::post('/{id}/prerrequisitos', [CursoController::class, 'agregarPrerrequisito']);
     Route::delete('/{id}/prerrequisitos/{prerrequisito}', [CursoController::class, 'eliminarPrerrequisito']);
+});
+
+// Rutas para los catálogos (ajusta según tus controladores reales)
+Route::get('/modalidad-estudios', function () {
+    return response()->json(ModalidadEstudio::where('estado', 'ACTIVO')->get(), 200);
+});
+
+Route::get('/periodos-academicos', function () {
+    return response()->json(PeriodoAcademico::orderBy('fecha_inicio', 'desc')->get(), 200);
+});
+
+Route::get('/facultades', function () {
+    return response()->json(Facultad::where('estado', 'ACTIVO')->get(), 200);
+});
+
+Route::get('/programas-estudio', function () {
+    return response()->json(ProgramaEstudio::where('is_active', true)->get(), 200);
 });
