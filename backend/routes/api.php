@@ -24,6 +24,13 @@ use App\Models\ModalidadEstudio;
 use App\Models\PeriodoAcademico;
 use App\Models\Facultad;
 use App\Models\ProgramaEstudio;
+use App\Http\Controllers\CostoMatriculaController;
+
+Route::put('/costos-matricula/{id}', [CostoMatriculaController::class, 'update']);
+
+Route::get('/costos-matricula', [CostoMatriculaController::class, 'index']);
+Route::post('/costos-matricula', [CostoMatriculaController::class, 'store']);
+Route::delete('/costos-matricula/{id}', [CostoMatriculaController::class, 'destroy']);
 
 // Alumnos Management
 Route::middleware('auth:sanctum')
